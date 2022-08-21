@@ -22,10 +22,32 @@ final class RegularBoardSolverTests: XCTestCase {
         let solver = RegularBoardSolver()
 
         // When
-        let solutions = solver.solve(board)
+        let solutions = solver.iterativeSolve(board)
 
         // Then
-        XCTAssertEqual(solutions, .solvable(solutions: [board]))
+        XCTAssertEqual(solutions, .solvable(solutions: [.init(steps: [])]))
+    }
+
+    func test_whenAttemptingToQuickSolveBoard_thenProvidesSolution() {
+        // Given
+        let board = try! RegularSudokuBoard(partiallyComplete: [])
+        let solver = RegularBoardSolver()
+
+        // When
+        let solution = solver.quickSolve(board)
+
+        // Then
+        XCTAssertEqual(solution, .solvable(try! RegularSudokuBoard([
+            [1, 2, 3, 4, 5, 6, 7, 8, 9],
+            [4, 5, 6, 7, 8, 9, 1, 2, 3],
+            [7, 8, 9, 1, 2, 3, 4, 5, 6],
+            [2, 1, 4, 3, 6, 5, 8, 9, 7],
+            [3, 6, 5, 8, 9, 7, 2, 1, 4],
+            [8, 9, 7, 2, 1, 4, 3, 6, 5],
+            [5, 3, 1, 6, 4, 2, 9, 7, 8],
+            [6, 4, 2, 9, 7, 8, 5, 3, 1],
+            [9, 7, 8, 5, 3, 1, 6, 4, 2]
+        ])))
     }
 }
 

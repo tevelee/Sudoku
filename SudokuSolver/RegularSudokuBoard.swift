@@ -2,8 +2,9 @@ import Foundation
 import Algorithms
 
 // Project TODOs
+// - Quick solver for first solution (backtrace)
 // - Solver with strategies
-// - Solver with diagnostics
+// - Diagnostics for solver (highlighting next region and logical step)
 // - Valid board generator
 // - Board scanner (reader) from string/image input
 // - UI
@@ -18,7 +19,7 @@ public protocol SudokuBoard {
 }
 
 public struct RegularSudokuBoard: SudokuBoard, Hashable, CustomStringConvertible {
-    public let rows: [[Value]]
+    public var rows: [[Value]]
 
     public let width: Int = 9
     public let height: Int = 9
@@ -45,6 +46,31 @@ public struct RegularSudokuBoard: SudokuBoard, Hashable, CustomStringConvertible
         let board = BoardPrinter().print(self)
         return "RegularBoard(\n\(board)\n)"
     }
+
+    func firstIncompletePosition() -> Position? {
+        for (rowIndex, row) in rows.enumerated() {
+            for (columnIndex, value) in row.enumerated() {
+                if value == nil {
+                    return Position(row: rowIndex, column: columnIndex)
+                }
+            }
+        }
+        return nil
+    }
+
+    subscript(position: Position) -> Value {
+        get {
+            rows[position.row][position.column]
+        }
+        set {
+            rows[position.row][position.column] = newValue
+        }
+    }
+}
+
+struct Position {
+    let row: Int
+    let column: Int
 }
 
 public typealias Value = Int?
@@ -79,7 +105,7 @@ public struct IncorrectValueError: Error, Equatable {
     public let column: ColumnIndex
 }
 
-private struct BoardValidator {
+struct BoardValidator {
     let rows: [[Value]]
 
     func validateNumberOfRows() throws {
