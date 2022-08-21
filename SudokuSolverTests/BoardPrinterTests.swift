@@ -2,7 +2,7 @@ import XCTest
 @testable import SudokuSolver
 
 final class BoardPrinterTests: XCTestCase {
-    func test_whenCreatingValidFullBoard_thenInitializationSucceeds() throws {
+    func test_whenCreatingValidFullBoard_thenInitializationSucceeds() {
         // Given
         let board = try! RegularSudokuBoard([
             [nil, nil, nil, 4, 5, 6, 7, 8, 9],

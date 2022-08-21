@@ -1,7 +1,7 @@
 import XCTest
 @testable import SudokuSolver
 
-final class BoardInitializerTests: XCTestCase {
+final class RegularBoardInitializerTests: XCTestCase {
     func test_whenCreatingBoardWithEmptyColumns_thenInitializationThrows() throws {
         let error: IncorrectSizeError = try expectToThrow {
             _ = try RegularSudokuBoard([])

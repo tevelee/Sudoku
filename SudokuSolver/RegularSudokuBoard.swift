@@ -2,15 +2,22 @@ import Foundation
 import Algorithms
 
 // Project TODOs
-// - Board printer
 // - Solver with strategies
 // - Solver with diagnostics
 // - Valid board generator
 // - Board scanner (reader) from string/image input
 // - UI
 // - Irregular board types: X board, board with variable shaped regions, NxM size, etc.
+// - Codify advanced rules: one in a row/col/seg, knight moves, diagonals, odds/evens. Validator/Solver can work against these rules
 
-public struct RegularSudokuBoard: Hashable {
+public protocol SudokuBoard {
+    var rows: [[Value]] { get }
+
+    var width: Int { get }
+    var height: Int { get }
+}
+
+public struct RegularSudokuBoard: SudokuBoard, Hashable, CustomStringConvertible {
     public let rows: [[Value]]
 
     public let width: Int = 9
@@ -32,6 +39,11 @@ public struct RegularSudokuBoard: Hashable {
             $0.padded(with: nil, desiredSize: 9)
         }.padded(with: Array(repeating: nil, count: 9), desiredSize: 9)
         try self.init(rows)
+    }
+
+    public var description: String {
+        let board = BoardPrinter().print(self)
+        return "RegularBoard(\n\(board)\n)"
     }
 }
 

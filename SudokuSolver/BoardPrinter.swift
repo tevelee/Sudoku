@@ -1,7 +1,7 @@
 import Foundation
 
 public final class BoardPrinter {
-    func print(_ board: RegularSudokuBoard) -> String {
+    func print(_ board: SudokuBoard) -> String {
         var rowsToPrint: [String] = []
         for (rowIndex, values) in board.rows.enumerated() {
             if rowIndex != 0, rowIndex.isMultiple(of: 3) {
