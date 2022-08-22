@@ -1,57 +1,78 @@
 import Foundation
 
-public final class SudokuSolver {
-    public init() {}
+@available(macOS 13.0.0, *)
+public final class SudokuSolver<Value> {
+    private let rules: [any SudokuRule<Value>]
 
-    public func iterativeSolve(_ board: SudokuBoard<Int>) -> IterativeSolutionResult {
+    public init(rules: [any SudokuRule<Value>] = []) {
+        self.rules = rules
+    }
+
+    public func iterativeSolve(_ board: SudokuBoard<Value>) -> IterativeSolutionResult<Value> {
         if board.values.allSatisfy({ $0 != nil }) {
             return .solvable(solutions: [.init(steps: [])])
         }
         return .couldNotSolve
     }
+}
 
-    public func quickSolve(_ board: SudokuBoard<Int>) -> QuickSolutionResult {
-//        let validator = BoardValidator(rows: board.rawData)
-//        do {
-//            try validator.validateDuplicateValuesInRows()
-//            try validator.validateDuplicateValuesInColumns()
-//            try validator.validateDuplicateValuesInRegions()
-//        } catch {
+@available(macOS 13.0.0, *)
+extension SudokuSolver where Value: Equatable {
+    public func quickSolve(_ board: SudokuBoard<Value>) -> QuickSolutionResult<Value> {
+//        guard board.rows.isValid(against: rules),
+//              board.columns.isValid(against: rules),
+//              board.regions.isValid(against: rules) else {
 //            return .unsolvable
 //        }
-//
-//        if board.values.allSatisfy({ $0 != nil }) {
-//            return .solvable(board)
-//        }
-//
-//        let values = Array(1 ... 9)
-//        if let position = board.firstIncompletePosition() {
-//            for value in values {
-//                var board = board
-//                board[position] = value
-//                if case .solvable(let board) = quickSolve(board) {
-//                    return .solvable(board)
-//                }
-//            }
-//        }
+
+        if board.values.allSatisfy({ $0 != nil }) {
+            return .solvable(board)
+        }
+
+        if let contentRule = rules.first(where: { $0 is ContentRule<Value> }) as? ContentRule<Value> {
+            if let position = board.firstIncompletePosition() {
+                for value in contentRule.allowedSymbols {
+                    var board = board
+                    board[position] = value
+                    if case .solvable(let board) = quickSolve(board) {
+                        return .solvable(board)
+                    }
+                }
+            }
+        }
         return .unsolvable
     }
 }
 
-public enum IterativeSolutionResult: Equatable {
-    case solvable(solutions: [Solution])
+private extension Division {
+    @available(macOS 13.0.0, *)
+    func isValid(against rules: [any SudokuRule<T>]) -> Bool {
+        slices.allSatisfy { slice in
+            rules.allSatisfy { $0.isValid(slice) }
+        }
+    }
+}
+
+public enum IterativeSolutionResult<Value> {
+    case solvable(solutions: [Solution<Value>])
     case unsolvable
     case couldNotSolve
 }
 
-public enum QuickSolutionResult: Equatable {
-    case solvable(SudokuBoard<Int>)
+extension IterativeSolutionResult: Equatable where Value: Equatable {}
+
+public enum QuickSolutionResult<Value> {
+    case solvable(SudokuBoard<Value>)
     case unsolvable
 }
 
-public struct Solution: Equatable {
-    public let steps: [SudokuBoard<Int>]
+extension QuickSolutionResult: Equatable where Value: Equatable {}
+
+public struct Solution<Value> {
+    public let steps: [SudokuBoard<Value>]
 }
+
+extension Solution: Equatable where Value: Equatable {}
 
 //struct BoardValidator {
 //    let rows: [[Value]]
