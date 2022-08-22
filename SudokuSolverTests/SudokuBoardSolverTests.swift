@@ -8,7 +8,7 @@ final class RegularBoardSolverTests: XCTestCase {
 
     func test_whenAttemptingToSolveFullBoard_thenGivesExistingSolution() {
         // Given
-        let board = try! RegularSudokuBoard([
+        let board = try! SudokuBoard<Int>([
             [1, 2, 3, 4, 5, 6, 7, 8, 9],
             [4, 5, 6, 7, 8, 9, 1, 2, 3],
             [7, 8, 9, 1, 2, 3, 4, 5, 6],
@@ -19,7 +19,7 @@ final class RegularBoardSolverTests: XCTestCase {
             [6, 7, 8, 9, 1, 2, 3, 4, 5],
             [9, 1, 2, 3, 4, 5, 6, 7, 8]
         ])
-        let solver = RegularBoardSolver()
+        let solver = SudokuSolver()
 
         // When
         let solutions = solver.iterativeSolve(board)
@@ -30,14 +30,14 @@ final class RegularBoardSolverTests: XCTestCase {
 
     func test_whenAttemptingToQuickSolveBoard_thenProvidesSolution() {
         // Given
-        let board = try! RegularSudokuBoard(partiallyComplete: [])
-        let solver = RegularBoardSolver()
+        let board = try! SudokuBoard<Int>(partiallyComplete: [])
+        let solver = SudokuSolver()
 
         // When
         let solution = solver.quickSolve(board)
 
         // Then
-        XCTAssertEqual(solution, .solvable(try! RegularSudokuBoard([
+        XCTAssertEqual(solution, .solvable(try! SudokuBoard([
             [1, 2, 3, 4, 5, 6, 7, 8, 9],
             [4, 5, 6, 7, 8, 9, 1, 2, 3],
             [7, 8, 9, 1, 2, 3, 4, 5, 6],

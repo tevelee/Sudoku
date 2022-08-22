@@ -1,10 +1,10 @@
 import XCTest
 @testable import SudokuSolver
 
-final class BoardPrinterTests: XCTestCase {
+final class SudokuBoardPrinterTests: XCTestCase {
     func test_whenCreatingValidFullBoard_thenInitializationSucceeds() {
         // Given
-        let board = try! RegularSudokuBoard([
+        let board = try! SudokuBoard([
             [nil, nil, nil, 4, 5, 6, 7, 8, 9],
             [nil, nil, nil, 7, 8, 9, 1, 2, 3],
             [nil, nil, nil, 1, 2, 3, 4, 5, 6],
@@ -15,7 +15,7 @@ final class BoardPrinterTests: XCTestCase {
             [6, 7, 8, 9, 1, 2, 3, 4, 5],
             [9, 1, 2, 3, 4, 5, 6, 7, 8]
         ])
-        let printer = BoardPrinter()
+        let printer = SudokuBoardPrinter()
 
         // When
         let result = printer.print(board)

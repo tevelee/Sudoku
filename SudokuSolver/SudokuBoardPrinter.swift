@@ -1,9 +1,9 @@
 import Foundation
 
-public final class BoardPrinter {
-    func print(_ board: SudokuBoard) -> String {
+public final class SudokuBoardPrinter {
+    func print<T: CustomStringConvertible>(_ board: SudokuBoard<T>) -> String {
         var rowsToPrint: [String] = []
-        for (rowIndex, values) in board.rows.enumerated() {
+        for (rowIndex, values) in board.rawData.enumerated() {
             if rowIndex != 0, rowIndex.isMultiple(of: 3) {
                 rowsToPrint.append("- - - + - - - + - - -")
             }
