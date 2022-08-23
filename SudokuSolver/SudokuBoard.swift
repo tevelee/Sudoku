@@ -14,9 +14,25 @@ import Algorithms
 public struct SudokuBoard<Value> {
     var rawData: [[Value?]]
 
-    public let rows: Division<Value?>
-    public let columns: Division<Value?>
-    public let regions: Division<Value?>
+    private let positionsOfRowSlices: Rows
+    private let positionsOfColumnSlices: Columns
+    private let positionsOfRegionSlices: Regions
+
+    public var rows: some Sequence<Slice<Value?>> {
+        values(from: positionsOfRowSlices)
+    }
+    public var columns: some Sequence<Slice<Value?>> {
+        values(from: positionsOfColumnSlices)
+    }
+    public var regions: some Sequence<Slice<Value?>> {
+        values(from: positionsOfRegionSlices)
+    }
+
+    private func values(from division: some Sequence<Slice<Position>>) -> some Sequence<Slice<Value?>> {
+        division.lazy.map {
+            $0.map { self[$0] }
+        }
+    }
 
     public let width: Int
     public let height: Int
@@ -33,15 +49,12 @@ public struct SudokuBoard<Value> {
         self.height = rows.count
         self.width = rows[0].count
         let grid = Grid(size: Size(width: width, height: height))
-        guard let regions = grid.regions(allowsEmpty: allowsEmptyRegions) else {
+        self.positionsOfRowSlices = Rows(grid: grid)
+        self.positionsOfColumnSlices = Columns(grid: grid)
+        guard let regions = Regions(grid: grid, allowsEmpty: allowsEmptyRegions) else {
             throw IncorrectSizeError.mustBeDivisibleToRegions
         }
-        let positionToValue: (Position) -> Value? = { position in
-            rows[position.row][position.column]
-        }
-        self.rows = grid.rows.map(positionToValue)
-        self.columns = grid.columns.map(positionToValue)
-        self.regions = regions.map(positionToValue)
+        self.positionsOfRegionSlices = regions
     }
 
     public init(partiallyComplete: [[Value?]] = [],

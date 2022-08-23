@@ -30,80 +30,131 @@ public struct Slice<T> {
     func map<K>(_ transform: (T) -> K) -> Slice<K> {
         .init(name: name, items: items.map(transform))
     }
-}
 
-public struct Division<T> {
-    public let slices: [Slice<T>]
-
-    func map<K>(_ transform: (T) -> K) -> Division<K> {
-        .init(slices: slices.map { slice in
-            slice.map(transform)
-        })
+    func compactMap<K>(_ transform: (T) -> K?) -> Slice<K> {
+        .init(name: name, items: items.compactMap(transform))
     }
 }
 
-extension Division: Equatable where T: Equatable {}
-extension Division: Hashable where T: Hashable {}
 extension Slice: Equatable where T: Equatable {}
 extension Slice: Hashable where T: Hashable {}
 
 struct Grid: Hashable {
     let size: Size
+}
 
-    var rows: Division<Position> {
-        let rows = (0 ..< size.height).map { row in
-            Slice(name: "Row \(row + 1)", items: (0 ..< size.width).map { column in
-                Position(row: row, column: column)
-            })
-        }
-        return .init(slices: rows)
+struct Rows: Sequence {
+    let grid: Grid
+
+    func makeIterator() -> Iterator {
+        Iterator(grid: grid)
     }
 
-    var columns: Division<Position> {
-        let columns = (0 ..< size.width).map { column in
-            Slice(name: "Column \(column + 1)", items: (0 ..< size.height).map { row in
+    struct Iterator: IteratorProtocol {
+        let grid: Grid
+        var row: Int = 0
+
+        mutating func next() -> Slice<Position>? {
+            defer { row += 1 }
+            guard row < grid.numberOfRows else {
+                return nil
+            }
+            let items = (0 ..< grid.numberOfColumns).map { column in
                 Position(row: row, column: column)
-            })
+            }
+            return .init(name: "Row \(row + 1)", items: items)
         }
-        return .init(slices: columns)
+    }
+}
+
+struct Columns: Sequence {
+    let grid: Grid
+
+    func makeIterator() -> Iterator {
+        Iterator(grid: grid)
     }
 
-    func regions(allowsEmpty: Bool) -> Division<Position>? {
-        if !allowsEmpty && gcd(size.width, size.height) == 1 {
+    struct Iterator: IteratorProtocol {
+        let grid: Grid
+        var column: Int = 0
+
+        mutating func next() -> Slice<Position>? {
+            defer { column += 1 }
+            guard column < grid.numberOfColumns else {
+                return nil
+            }
+            let items = (0 ..< grid.numberOfRows).map { row in
+                Position(row: row, column: column)
+            }
+            return .init(name: "Column \(column + 1)", items: items)
+        }
+    }
+}
+
+private extension Grid {
+    var numberOfRows: Int { size.height }
+    var numberOfColumns: Int { size.width }
+}
+
+struct Regions: Sequence {
+    private let regionSize: Size
+    private let numberOfRegionRows: Int
+    private let numberOfRegionColumns: Int
+
+    init?(grid: Grid, allowsEmpty: Bool) {
+        if !allowsEmpty && gcd(grid.size.width, grid.size.height) == 1 {
             return nil
         }
-        let sizeOfRegion = max(size.width, size.height)
+        let sizeOfRegion = Swift.max(grid.size.width, grid.size.height)
         guard let (smallerSideOfRegion, largerSideOfRegion) = sizeOfRegion.mostEvenDivisors() else {
             return nil
         }
-        if smallerSideOfRegion == 1 { // That's a row/column
-            return allowsEmpty ? .init(slices: []) : nil
+        if !allowsEmpty, smallerSideOfRegion == 1 {
+            return nil
         }
-        let regionWidth: Int
-        let regionHeight: Int
-        if size.width.isMultiple(of: smallerSideOfRegion) {
-            regionWidth = smallerSideOfRegion
-            regionHeight = largerSideOfRegion
+        if grid.size.width.isMultiple(of: smallerSideOfRegion) {
+            regionSize = Size(width: smallerSideOfRegion, height: largerSideOfRegion)
         } else {
-            regionWidth = largerSideOfRegion
-            regionHeight = smallerSideOfRegion
+            regionSize = Size(width: largerSideOfRegion, height: smallerSideOfRegion)
         }
+        numberOfRegionRows = grid.size.height / regionSize.height
+        numberOfRegionColumns = grid.size.width / regionSize.width
+    }
 
-        let numberOfRegionRows = size.height / regionHeight
-        let numberOfRegionColumns = size.width / regionWidth
+    func makeIterator() -> Iterator {
+        Iterator(regionSize: regionSize,
+                 numberOfRegionRows: numberOfRegionRows,
+                 numberOfRegionColumns: numberOfRegionColumns)
+    }
 
-        let regions = (0 ..< numberOfRegionRows).flatMap { row in
-            (0 ..< numberOfRegionColumns).map { column in
-                let positions = (0 ..< regionHeight).flatMap { y in
-                    (0 ..< regionWidth).map { x in
-                        Position(row: row * regionHeight + y,
-                                 column: column * regionWidth + x)
-                    }
-                }
-                return Slice(name: "Region \(row * numberOfRegionColumns + column + 1)", items: positions)
+    struct Iterator: IteratorProtocol {
+        let regionSize: Size
+        let numberOfRegionRows: Int
+        let numberOfRegionColumns: Int
+
+        var row: Int = 0
+        var column: Int = 0
+
+        mutating func next() -> Slice<Position>? {
+            guard row < numberOfRegionRows, column < numberOfRegionColumns else {
+                return nil
             }
+            defer {
+                if column == numberOfRegionColumns - 1 {
+                    column = 0
+                    row += 1
+                } else {
+                    column += 1
+                }
+            }
+            let positions = (0 ..< regionSize.height).flatMap { y in
+                (0 ..< regionSize.width).map { x in
+                    Position(row: row * regionSize.height + y,
+                             column: column * regionSize.width + x)
+                }
+            }
+            return Slice(name: "Region \(row * numberOfRegionColumns + column + 1)", items: positions)
         }
-        return .init(slices: regions)
     }
 }
 
@@ -130,6 +181,9 @@ private extension Int {
                 if diff < minDifference {
                     minDifference = diff
                     result = (Swift.min(one, other), Swift.max(one, other))
+                    if diff <= 1 {
+                        return result
+                    }
                 }
             }
         }

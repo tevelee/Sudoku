@@ -6,6 +6,7 @@ final class RegularBoardSolverTests: XCTestCase {
         // TODO: empty board shows all solutions
     }
 
+    @available(macOS 13.0.0, *)
     func test_whenAttemptingToSolveFullBoard_thenGivesExistingSolution() {
         // Given
         let board = try! SudokuBoard<Int>([
@@ -19,7 +20,9 @@ final class RegularBoardSolverTests: XCTestCase {
             [6, 7, 8, 9, 1, 2, 3, 4, 5],
             [9, 1, 2, 3, 4, 5, 6, 7, 8]
         ])
-        let solver = SudokuSolver()
+        let contentRule = ContentRule(allowedSymbols: 1...9)
+        let uniquenessRule = UniqueSymbolsRule(rowsAndColumnsAndRegions: board)
+        let solver = SudokuSolver(rules: [contentRule, uniquenessRule])
 
         // When
         let solutions = solver.iterativeSolve(board)
@@ -28,10 +31,13 @@ final class RegularBoardSolverTests: XCTestCase {
         XCTAssertEqual(solutions, .solvable(solutions: [.init(steps: [])]))
     }
 
+    @available(macOS 13.0.0, *)
     func test_whenAttemptingToQuickSolveBoard_thenProvidesSolution() {
         // Given
         let board = try! SudokuBoard<Int>(partiallyComplete: [])
-        let solver = SudokuSolver()
+        let contentRule = ContentRule(allowedSymbols: 1...9)
+        let uniquenessRule = UniqueSymbolsRule(rowsAndColumnsAndRegions: board)
+        let solver = SudokuSolver(rules: [contentRule, uniquenessRule])
 
         // When
         let solution = solver.quickSolve(board)
