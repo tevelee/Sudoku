@@ -44,24 +44,31 @@ public struct SudokuBoard<Value> {
 
     public enum Regions {
         case custom([Slice<Position>])
-        case rectangular(allowsEmpty: Bool)
+        case rectangular(allowStripes: Bool)
+
+        static func empty() -> Self {
+            .custom([])
+        }
     }
 
-    public init(_ rows: [[Value?]], regions: Regions = .rectangular(allowsEmpty: false)) throws {
+    public init(_ rows: [[Value?]], regions: Regions = .rectangular(allowStripes: false)) throws {
         if rows.isEmpty || rows.contains(where: \.isEmpty) {
             throw IncorrectSizeError.mustHavePositiveSize
         }
         self.rawData = rows
         self.height = rows.count
         self.width = rows[0].count
-        let grid = Grid(size: Size(width: width, height: height))
+        let grid = Grid(width: width, height: height)
         self.positionsOfRowSlices = AnySequence(Rows(grid: grid))
         self.positionsOfColumnSlices = AnySequence(Columns(grid: grid))
         switch regions {
             case let .custom(regions):
+                guard regions.flatMap(\.items).allSatisfy(grid.contains) else {
+                    throw SlicingError.positionOutOfBounds
+                }
                 self.positionsOfRegionSlices = AnySequence(regions)
-            case let .rectangular(allowsEmpty):
-                guard let regions = RectangularRegions(grid: grid, allowsEmpty: allowsEmpty) else {
+            case let .rectangular(allowStripes):
+                guard let regions = RectangularRegions(grid: grid, allowStripes: allowStripes) else {
                     throw IncorrectSizeError.mustBeDivisibleToRegions
                 }
                 self.positionsOfRegionSlices = AnySequence(regions)
@@ -71,9 +78,12 @@ public struct SudokuBoard<Value> {
     public init(partiallyComplete: [[Value?]] = [],
                 width: Int = 9,
                 height: Int = 9,
-                regions: Regions = .rectangular(allowsEmpty: false)) throws {
+                regions: Regions = .rectangular(allowStripes: false)) throws {
         guard width > 0, height > 0 else {
             throw IncorrectSizeError.mustHavePositiveSize
+        }
+        guard partiallyComplete.count <= height, partiallyComplete.allSatisfy({ $0.count <= width }) else {
+            throw IncorrectSizeError.valuesExceedProvidedSize
         }
         let rows = partiallyComplete.map {
             $0.padded(with: nil, desiredSize: width)
@@ -102,7 +112,7 @@ public struct SudokuBoard<Value> {
     }
 
     func contains(position: Position) -> Bool {
-        (0 ..< width).contains(position.column) && (0 ..< height).contains(position.row)
+        Grid(width: width, height: height).contains(position: position)
     }
 }
 
@@ -126,7 +136,12 @@ extension SudokuBoard: CustomStringConvertible where Value: CustomStringConverti
 
 public enum IncorrectSizeError: Error, Equatable {
     case mustHavePositiveSize
+    case valuesExceedProvidedSize
     case mustBeDivisibleToRegions
+}
+
+public enum SlicingError: Error, Equatable {
+    case positionOutOfBounds
 }
 
 private extension Array {

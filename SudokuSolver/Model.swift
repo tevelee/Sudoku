@@ -41,6 +41,14 @@ extension Slice: Hashable where T: Hashable {}
 
 struct Grid: Hashable {
     let size: Size
+
+    init(width: Int, height: Int) {
+        size = Size(width: width, height: height)
+    }
+
+    func contains(position: Position) -> Bool {
+        (0 ..< size.width).contains(position.column) && (0 ..< size.height).contains(position.row)
+    }
 }
 
 struct Rows: Sequence {
@@ -101,15 +109,13 @@ struct RectangularRegions: Sequence {
     private let numberOfRegionRows: Int
     private let numberOfRegionColumns: Int
 
-    init?(grid: Grid, allowsEmpty: Bool) {
-        if !allowsEmpty && gcd(grid.size.width, grid.size.height) == 1 {
+    init?(grid: Grid, allowStripes: Bool) {
+        if !allowStripes && gcd(grid.size.width, grid.size.height) == 1 {
             return nil
         }
         let sizeOfRegion = Swift.max(grid.size.width, grid.size.height)
-        guard let (smallerSideOfRegion, largerSideOfRegion) = sizeOfRegion.mostEvenDivisors() else {
-            return nil
-        }
-        if !allowsEmpty, smallerSideOfRegion == 1 {
+        let (smallerSideOfRegion, largerSideOfRegion) = sizeOfRegion.mostEvenDivisors()
+        if !allowStripes, smallerSideOfRegion == 1 {
             return nil
         }
         if grid.size.width.isMultiple(of: smallerSideOfRegion) {
@@ -172,9 +178,9 @@ private func gcd(_ m: Int, _ n: Int) -> Int {
 }
 
 private extension Int {
-    func mostEvenDivisors() -> (Int, Int)? {
+    func mostEvenDivisors() -> (Int, Int) {
         var minDifference: Int = .max
-        var result: (Int, Int)?
+        var result: (Int, Int) = (1, self)
         for one in 1 ... self {
             for other in 1 ... self where one * other == self {
                 let diff = abs(one - other)
