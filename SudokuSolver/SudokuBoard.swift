@@ -10,13 +10,14 @@ import Algorithms
 // - UI
 // - Irregular board types: X board, board with variable shaped regions, NxM size, etc.
 // - Codify advanced rules: one in a row/col/seg, knight moves, diagonals, odds/evens. Validator/Solver can work against these rules
+// - Generate jigsaw regions
 
 public struct SudokuBoard<Value> {
-    var rawData: [[Value?]]
+    private var rawData: [[Value?]]
 
-    private let positionsOfRowSlices: Rows
-    private let positionsOfColumnSlices: Columns
-    private let positionsOfRegionSlices: Regions
+    let positionsOfRowSlices: Rows
+    let positionsOfColumnSlices: Columns
+    let positionsOfRegionSlices: RectangularRegions
 
     public var rows: some Sequence<Slice<Value?>> {
         values(from: positionsOfRowSlices)
@@ -51,7 +52,7 @@ public struct SudokuBoard<Value> {
         let grid = Grid(size: Size(width: width, height: height))
         self.positionsOfRowSlices = Rows(grid: grid)
         self.positionsOfColumnSlices = Columns(grid: grid)
-        guard let regions = Regions(grid: grid, allowsEmpty: allowsEmptyRegions) else {
+        guard let regions = RectangularRegions(grid: grid, allowsEmpty: allowsEmptyRegions) else {
             throw IncorrectSizeError.mustBeDivisibleToRegions
         }
         self.positionsOfRegionSlices = regions
@@ -88,6 +89,10 @@ public struct SudokuBoard<Value> {
         set {
             rawData[position.row][position.column] = newValue
         }
+    }
+
+    func contains(position: Position) -> Bool {
+        (0 ..< width).contains(position.column) && (0 ..< height).contains(position.row)
     }
 }
 

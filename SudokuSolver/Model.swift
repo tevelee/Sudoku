@@ -96,7 +96,7 @@ private extension Grid {
     var numberOfColumns: Int { size.width }
 }
 
-struct Regions: Sequence {
+struct RectangularRegions: Sequence {
     private let regionSize: Size
     private let numberOfRegionRows: Int
     private let numberOfRegionColumns: Int
