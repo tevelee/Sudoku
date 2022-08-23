@@ -15,9 +15,9 @@ import Algorithms
 public struct SudokuBoard<Value> {
     private var rawData: [[Value?]]
 
-    let positionsOfRowSlices: Rows
-    let positionsOfColumnSlices: Columns
-    let positionsOfRegionSlices: RectangularRegions
+    let positionsOfRowSlices: AnySequence<Slice<Position>>
+    let positionsOfColumnSlices: AnySequence<Slice<Position>>
+    let positionsOfRegionSlices: AnySequence<Slice<Position>>
 
     public var rows: some Sequence<Slice<Value?>> {
         values(from: positionsOfRowSlices)
@@ -42,7 +42,12 @@ public struct SudokuBoard<Value> {
         rawData.lazy.flatMap { $0.lazy }
     }
 
-    public init(_ rows: [[Value?]], allowsEmptyRegions: Bool = false) throws {
+    public enum Regions {
+        case custom([Slice<Position>])
+        case rectangular(allowsEmpty: Bool)
+    }
+
+    public init(_ rows: [[Value?]], regions: Regions = .rectangular(allowsEmpty: false)) throws {
         if rows.isEmpty || rows.contains(where: \.isEmpty) {
             throw IncorrectSizeError.mustHavePositiveSize
         }
@@ -50,25 +55,30 @@ public struct SudokuBoard<Value> {
         self.height = rows.count
         self.width = rows[0].count
         let grid = Grid(size: Size(width: width, height: height))
-        self.positionsOfRowSlices = Rows(grid: grid)
-        self.positionsOfColumnSlices = Columns(grid: grid)
-        guard let regions = RectangularRegions(grid: grid, allowsEmpty: allowsEmptyRegions) else {
-            throw IncorrectSizeError.mustBeDivisibleToRegions
+        self.positionsOfRowSlices = AnySequence(Rows(grid: grid))
+        self.positionsOfColumnSlices = AnySequence(Columns(grid: grid))
+        switch regions {
+            case let .custom(regions):
+                self.positionsOfRegionSlices = AnySequence(regions)
+            case let .rectangular(allowsEmpty):
+                guard let regions = RectangularRegions(grid: grid, allowsEmpty: allowsEmpty) else {
+                    throw IncorrectSizeError.mustBeDivisibleToRegions
+                }
+                self.positionsOfRegionSlices = AnySequence(regions)
         }
-        self.positionsOfRegionSlices = regions
     }
 
     public init(partiallyComplete: [[Value?]] = [],
                 width: Int = 9,
                 height: Int = 9,
-                allowsEmptyRegions: Bool = false) throws {
+                regions: Regions = .rectangular(allowsEmpty: false)) throws {
         guard width > 0, height > 0 else {
             throw IncorrectSizeError.mustHavePositiveSize
         }
         let rows = partiallyComplete.map {
             $0.padded(with: nil, desiredSize: width)
         }.padded(with: Array(repeating: nil, count: width), desiredSize: height)
-        try self.init(rows, allowsEmptyRegions: allowsEmptyRegions)
+        try self.init(rows, regions: regions)
     }
 
     func firstIncompletePosition() -> Position? {

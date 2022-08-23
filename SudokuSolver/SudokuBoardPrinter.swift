@@ -30,10 +30,10 @@ public final class SudokuBoardPrinter {
                 Swift.print(row.items.map { $0?.description ?? emptyPlaceholder }.joined(separator: spacing), to: &result)
             }
         } else {
-            var map: [Position: String] = [:]
+            var regions: [Position: String] = [:]
             for slice in board.positionsOfRegionSlices {
                 for item in slice.items {
-                    map[item] = slice.name
+                    regions[item] = slice.name
                 }
             }
 
@@ -62,21 +62,21 @@ public final class SudokuBoardPrinter {
                             let column = side == .leading ? 0 : board.width - 1
                             let p1 = Position(row: r1, column: column)
                             let p2 = Position(row: r2, column: column)
-                            rowToPrint += map[p1] == map[p2] ? verticalBorder : intersectingBorder
+                            rowToPrint += regions[p1] == regions[p2] ? verticalBorder : intersectingBorder
                         case (.outerSeparator, .content):
                             rowToPrint += horizontalBorder.repeated(2 * horizontalPadding + 1)
                         case let (.outerSeparator(side), .innerSeparator(c1, c2)):
                             let row = side == .leading ? 0 : board.height - 1
                             let p1 = Position(row: row, column: c1)
                             let p2 = Position(row: row, column: c2)
-                            rowToPrint += map[p1] == map[p2] ? horizontalBorder : intersectingBorder
+                            rowToPrint += regions[p1] == regions[p2] ? horizontalBorder : intersectingBorder
                         case let (.innerSeparator(r1, r2), .innerSeparator(c1, c2)):
                             let p1 = Position(row: r1, column: c1)
                             let p2 = Position(row: r2, column: c1)
                             let p3 = Position(row: r1, column: c2)
                             let p4 = Position(row: r2, column: c2)
-                            let needsHorizontal = map[p1] != map[p2] || map[p3] != map[p4]
-                            let needsVertical = map[p1] != map[p3] || map[p2] != map[p4]
+                            let needsHorizontal = regions[p1] != regions[p2] || regions[p3] != regions[p4]
+                            let needsVertical = regions[p1] != regions[p3] || regions[p2] != regions[p4]
                             switch (needsHorizontal, needsVertical) {
                                 case (true, true):
                                     rowToPrint += intersectingBorder
@@ -96,13 +96,13 @@ public final class SudokuBoardPrinter {
                         case let (.content(row), .innerSeparator(c1, c2)):
                             let p1 = Position(row: row, column: c1)
                             let p2 = Position(row: row, column: c2)
-                            let output = map[p1] == map[p2] ? spacing : verticalBorder
+                            let output = regions[p1] == regions[p2] ? spacing : verticalBorder
                             rowToPrint += output
                             rowToPrintAroundContentRow += output
                         case let (.innerSeparator(r1, r2), .content(column)):
                             let p1 = Position(row: r1, column: column)
                             let p2 = Position(row: r2, column: column)
-                            rowToPrint += (map[p1] == map[p2] ? spacing : horizontalBorder).repeated(2 * horizontalPadding + 1)
+                            rowToPrint += (regions[p1] == regions[p2] ? spacing : horizontalBorder).repeated(2 * horizontalPadding + 1)
                     }
                 }
                 if rowToPrintAroundContentRow.isEmpty {
