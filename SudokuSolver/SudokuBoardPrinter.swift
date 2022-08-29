@@ -1,25 +1,180 @@
 import Foundation
 import Algorithms
 
-public final class SudokuBoardPrinter {
-    let useBorder: Bool
-    let horizontalPadding: Int
-    let verticalPadding: Int
+public enum Component {
+    case content((any CustomStringConvertible)?)
+    case spacing
+    case border(Border)
 
-    init(useBorder: Bool = true,
-        horizontalPadding: Int = 1,
-        verticalPadding: Int = 0) {
-        self.useBorder = useBorder
-        self.horizontalPadding = horizontalPadding
-        self.verticalPadding = verticalPadding
+    static func border(top: Border.Style, leading: Border.Style, bottom: Border.Style, trailing: Border.Style) -> Component {
+        .border(Border(top: top, leading: leading, bottom: bottom, trailing: trailing))
+    }
+}
+
+public struct Border: Equatable {
+    public enum Style: Equatable, Comparable {
+        case none, soft, hard
+
+        func downgraded() -> Style {
+            if case .hard = self {
+                return .soft
+            }
+            return .none
+        }
     }
 
-    private let emptyPlaceholder = " "
-    private let spacing = " "
+    public let top: Style
+    public let leading: Style
+    public let bottom: Style
+    public let trailing: Style
 
-    private let horizontalBorder = "-"
-    private let verticalBorder = "|"
-    private let intersectingBorder = "+"
+    func downgraded() -> Border {
+        Border(top: top.downgraded(),
+               leading: leading.downgraded(),
+               bottom: bottom.downgraded(),
+               trailing: trailing.downgraded())
+    }
+}
+
+public protocol SudokuComponentRenderer {
+    func render(component: Component) -> String
+}
+
+public class ASCIIRenderer: SudokuComponentRenderer {
+    private let threshold: Border.Style
+
+    public init(drawSeparators: Bool = false) {
+        self.threshold = drawSeparators ? .soft : .hard
+    }
+
+    public func render(component: Component) -> String {
+        switch component {
+            case .spacing: return " "
+            case .content(let value): return value?.description ?? " "
+            case .border(let border): return render(border)
+        }
+    }
+
+    private func render(_ border: Border) -> String {
+        let horizontal = border.leading >= threshold || border.trailing >= threshold
+        let vertical = border.top >= threshold || border.bottom >= threshold
+        switch (horizontal, vertical) {
+            case (true, true): return "+"
+            case (false, true): return "|"
+            case (true, false): return "-"
+            case (false, false): return " "
+        }
+    }
+}
+
+public class BoxedRenderer: SudokuComponentRenderer {
+    public enum Style: Equatable {
+        case plain(PlainStyle)
+        case leveled(LeveledStyle)
+    }
+    public enum PlainStyle: Equatable {
+        case rounded
+        case edged
+    }
+    public enum LeveledStyle: Equatable {
+        case thinAndHeavy
+        case singleAndDouble
+    }
+
+    private let style: Style
+
+    public init(style: Style = .plain(.rounded)) {
+        self.style = style
+    }
+
+    public func render(component: Component) -> String {
+        switch component {
+            case .spacing: return " "
+            case .content(let value): return value?.description ?? " "
+            case .border(let border):
+                switch style {
+                    case .plain:
+                        return render(border.downgraded())
+                    case .leveled:
+                        return render(border)
+                }
+        }
+    }
+
+    private func render(_ border: Border) -> String {
+        switch (border.top, border.leading, border.bottom, border.trailing) {
+            case (.none, .none, .none, .none): return " "
+
+            case (.none, .soft, .none, .soft): return "─"
+            case (.none, .hard, .none, .hard): return style == .leveled(.thinAndHeavy) ? "━" : "═"
+
+            case (.soft, .none, .soft, .none): return "│"
+            case (.hard, .none, .hard, .none): return style == .leveled(.thinAndHeavy) ? "┃" : "║"
+
+            case (.soft, .soft, .none, .none): return style == .plain(.rounded) ? "╯" : "┘"
+            case (.none, .soft, .soft, .none): return style == .plain(.rounded) ? "╮" : "┐"
+            case (.none, .none, .soft, .soft): return style == .plain(.rounded) ? "╭" : "┌"
+            case (.soft, .none, .none, .soft): return style == .plain(.rounded) ? "╰" : "└"
+
+            case (.hard, .hard, .none, .none): return style == .leveled(.thinAndHeavy) ? "┛" : "╝"
+            case (.none, .hard, .hard, .none): return style == .leveled(.thinAndHeavy) ? "┓" : "╗"
+            case (.none, .none, .hard, .hard): return style == .leveled(.thinAndHeavy) ? "┏" : "╔"
+            case (.hard, .none, .none, .hard): return style == .leveled(.thinAndHeavy) ? "┗" : "╚"
+
+            case (.none, .soft, .soft, .soft): return "┬"
+            case (.soft, .none, .soft, .soft): return "├"
+            case (.soft, .soft, .none, .soft): return "┴"
+            case (.soft, .soft, .soft, .none): return "┤"
+
+            case (.none, .hard, .soft, .hard): return style == .leveled(.thinAndHeavy) ? "┯" : "╤"
+            case (.hard, .none, .hard, .soft): return style == .leveled(.thinAndHeavy) ? "┠" : "╟"
+            case (.soft, .hard, .none, .hard): return style == .leveled(.thinAndHeavy) ? "┷" : "╧"
+            case (.hard, .soft, .hard, .none): return style == .leveled(.thinAndHeavy) ? "┨" : "╢"
+
+            case (.none, .hard, .hard, .hard): return style == .leveled(.thinAndHeavy) ? "┳" : "╦"
+            case (.hard, .none, .hard, .hard): return style == .leveled(.thinAndHeavy) ? "┣" : "╠"
+            case (.hard, .hard, .none, .hard): return style == .leveled(.thinAndHeavy) ? "┻" : "╩"
+            case (.hard, .hard, .hard, .none): return style == .leveled(.thinAndHeavy) ? "┫" : "╣"
+
+            case (.soft, .soft, .soft, .soft): return "┼"
+            case (.hard, .hard, .hard, .hard): return style == .leveled(.thinAndHeavy) ? "╊" : "╬"
+
+            case (.hard, .soft, .hard, .soft): return style == .leveled(.thinAndHeavy) ? "╂" : "╫"
+            case (.soft, .hard, .soft, .hard): return style == .leveled(.thinAndHeavy) ? "┿" : "╪"
+
+            case (.soft, .soft, .hard, .hard): return style == .leveled(.thinAndHeavy) ? "╆" : "╔"
+            case (.hard, .soft, .soft, .hard): return style == .leveled(.thinAndHeavy) ? "╄" : "╚"
+            case (.hard, .hard, .soft, .soft): return style == .leveled(.thinAndHeavy) ? "╃" : "╝"
+            case (.soft, .hard, .hard, .soft): return style == .leveled(.thinAndHeavy) ? "╅" : "╗"
+
+            case (.soft, .hard, .hard, .hard): return style == .leveled(.thinAndHeavy) ? "╈" : "╦"
+            case (.hard, .soft, .hard, .hard): return style == .leveled(.thinAndHeavy) ? "╊" : "╠"
+            case (.hard, .hard, .soft, .hard): return style == .leveled(.thinAndHeavy) ? "╇" : "╩"
+            case (.hard, .hard, .hard, .soft): return style == .leveled(.thinAndHeavy) ? "╉" : "╣"
+
+
+            default:
+                assertionFailure("Unknown symbol")
+                return ""
+        }
+    }
+}
+
+public final class SudokuBoardPrinter {
+    private let borderSize: Int
+    private let horizontalPadding: Int
+    private let verticalPadding: Int
+    private let renderer: any SudokuComponentRenderer
+
+    init(drawBorder: Bool = true,
+         horizontalPadding: Int = 1,
+         verticalPadding: Int = 0,
+         renderer: any SudokuComponentRenderer = ASCIIRenderer()) {
+        self.borderSize = drawBorder ? 1 : 0
+        self.horizontalPadding = horizontalPadding
+        self.verticalPadding = verticalPadding
+        self.renderer = renderer
+    }
 
     private let newLine = "\n"
 
@@ -27,7 +182,7 @@ public final class SudokuBoardPrinter {
         var result: String = ""
         if Array(board.positionsOfRegionSlices).isEmpty {
             for row in board.rows {
-                Swift.print(row.items.map { $0?.description ?? emptyPlaceholder }.joined(separator: spacing), to: &result)
+                Swift.print(row.items.map { render(.content($0)) }.joined(separator: render(.spacing)), to: &result)
             }
         } else {
             var regions: [Position: String] = [:]
@@ -37,72 +192,42 @@ public final class SudokuBoardPrinter {
                 }
             }
 
-            let borderCount = useBorder ? 1 : 0
             let vertical = (0 ..< board.height)
                 .lazy
                 .interspersedMap(Tile.content, with: Tile.innerSeparator)
-                .prepended(with: .outerSeparator(.leading), count: borderCount)
-                .appended(with: .outerSeparator(.trailing), count: borderCount)
+                .prepended(with: .outerSeparator(.leading), count: borderSize)
+                .appended(with: .outerSeparator(.trailing), count: borderSize)
             for row in vertical {
                 var rowToPrint = ""
                 var rowToPrintAroundContentRow = ""
                 let horizontal = (0 ..< board.width)
                     .lazy
                     .interspersedMap(Tile.content, with: Tile.innerSeparator)
-                    .prepended(with: .outerSeparator(.leading), count: borderCount)
-                    .appended(with: .outerSeparator(.trailing), count: borderCount)
+                    .prepended(with: .outerSeparator(.leading), count: borderSize)
+                    .appended(with: .outerSeparator(.trailing), count: borderSize)
                 for column in horizontal {
+                    let content = render(component(row: row, column: column, board: board, regions: regions))
+
+                    // add horizontal padding
                     switch (row, column) {
-                        case (.outerSeparator, .outerSeparator):
-                            rowToPrint += intersectingBorder
-                        case (.content, .outerSeparator):
-                            rowToPrint += verticalBorder
-                            rowToPrintAroundContentRow += verticalBorder
-                        case let (.innerSeparator(r1, r2), .outerSeparator(side)):
-                            let column = side == .leading ? 0 : board.width - 1
-                            let p1 = Position(row: r1, column: column)
-                            let p2 = Position(row: r2, column: column)
-                            rowToPrint += regions[p1] == regions[p2] ? verticalBorder : intersectingBorder
-                        case (.outerSeparator, .content):
-                            rowToPrint += horizontalBorder.repeated(2 * horizontalPadding + 1)
-                        case let (.outerSeparator(side), .innerSeparator(c1, c2)):
-                            let row = side == .leading ? 0 : board.height - 1
-                            let p1 = Position(row: row, column: c1)
-                            let p2 = Position(row: row, column: c2)
-                            rowToPrint += regions[p1] == regions[p2] ? horizontalBorder : intersectingBorder
-                        case let (.innerSeparator(r1, r2), .innerSeparator(c1, c2)):
-                            let p1 = Position(row: r1, column: c1)
-                            let p2 = Position(row: r2, column: c1)
-                            let p3 = Position(row: r1, column: c2)
-                            let p4 = Position(row: r2, column: c2)
-                            let needsHorizontal = regions[p1] != regions[p2] || regions[p3] != regions[p4]
-                            let needsVertical = regions[p1] != regions[p3] || regions[p2] != regions[p4]
-                            switch (needsHorizontal, needsVertical) {
-                                case (true, true):
-                                    rowToPrint += intersectingBorder
-                                case (true, false):
-                                    rowToPrint += horizontalBorder
-                                case (false, true):
-                                    rowToPrint += verticalBorder
-                                case (false, false):
-                                    rowToPrint += spacing
-                            }
-                        case let (.content(row), .content(column)):
-                            let position = Position(row: row, column: column)
-                            rowToPrint += spacing.repeated(horizontalPadding)
-                            rowToPrint += board[position]?.description ?? emptyPlaceholder
-                            rowToPrint += spacing.repeated(horizontalPadding)
-                            rowToPrintAroundContentRow += spacing.repeated(horizontalPadding * 2 + 1)
-                        case let (.content(row), .innerSeparator(c1, c2)):
-                            let p1 = Position(row: row, column: c1)
-                            let p2 = Position(row: row, column: c2)
-                            let output = regions[p1] == regions[p2] ? spacing : verticalBorder
-                            rowToPrint += output
-                            rowToPrintAroundContentRow += output
-                        case let (.innerSeparator(r1, r2), .content(column)):
-                            let p1 = Position(row: r1, column: column)
-                            let p2 = Position(row: r2, column: column)
-                            rowToPrint += (regions[p1] == regions[p2] ? spacing : horizontalBorder).repeated(2 * horizontalPadding + 1)
+                        case (.outerSeparator, .content), (.innerSeparator, .content):
+                            rowToPrint += content.repeated(2 * horizontalPadding + 1)
+                        case (.content, .content):
+                            rowToPrint += render(.spacing).repeated(horizontalPadding)
+                            rowToPrint += content
+                            rowToPrint += render(.spacing).repeated(horizontalPadding)
+                        default:
+                            rowToPrint += content
+                    }
+
+                    // add vertical padding
+                    switch (row, column) {
+                        case (.content, .content):
+                            rowToPrintAroundContentRow += render(.spacing).repeated(horizontalPadding * 2 + 1)
+                        case (.content, .outerSeparator), (.content, .innerSeparator):
+                            rowToPrintAroundContentRow += content
+                        default:
+                            break
                     }
                 }
                 if rowToPrintAroundContentRow.isEmpty {
@@ -116,6 +241,74 @@ public final class SudokuBoardPrinter {
             result.removeLast()
         }
         return result
+    }
+
+    private func render(_ component: Component) -> String {
+        renderer.render(component: component)
+    }
+
+    private func component<T: CustomStringConvertible>(row: Tile, column: Tile, board: SudokuBoard<T>, regions: [Position: String]) -> Component {
+        switch (row, column) {
+            case let (.outerSeparator(row), .outerSeparator(column)):
+                return .border(top: row == .leading ? .none : .hard,
+                               leading: column == .leading ? .none : .hard,
+                               bottom: row == .trailing ? .none : .hard,
+                               trailing: column == .trailing ? .none : .hard)
+            case (.content, .outerSeparator):
+                return .border(top: .hard,
+                               leading: .none,
+                               bottom: .hard,
+                               trailing: .none)
+            case (.outerSeparator, .content):
+                return .border(top: .none,
+                               leading: .hard,
+                               bottom: .none,
+                               trailing: .hard)
+            case let (.innerSeparator(r1, r2), .outerSeparator(side)):
+                let column = side == .leading ? 0 : board.width - 1
+                let p1 = Position(row: r1, column: column)
+                let p2 = Position(row: r2, column: column)
+                let needsHardSeparator = regions[p1] != regions[p2]
+                return .border(top: .hard,
+                               leading: side == .leading ? .none : needsHardSeparator ? .hard : .soft,
+                               bottom: .hard,
+                               trailing: side == .trailing ? .none : needsHardSeparator ? .hard : .soft)
+            case let (.outerSeparator(side), .innerSeparator(c1, c2)):
+                let row = side == .leading ? 0 : board.height - 1
+                let p1 = Position(row: row, column: c1)
+                let p2 = Position(row: row, column: c2)
+                let needsHardSeparator = regions[p1] != regions[p2]
+                return .border(top: side == .leading ? .none : needsHardSeparator ? .hard : .soft,
+                               leading: .hard,
+                               bottom: side == .trailing ? .none : needsHardSeparator ? .hard : .soft,
+                               trailing: .hard)
+            case let (.innerSeparator(r1, r2), .innerSeparator(c1, c2)):
+                let topLeading = Position(row: r1, column: c1)
+                let topTrailing = Position(row: r1, column: c2)
+                let bottomLeading = Position(row: r2, column: c1)
+                let bottomTrailing = Position(row: r2, column: c2)
+                return .border(top: regions[topLeading] == regions[topTrailing] ? .soft : .hard,
+                               leading: regions[topLeading] == regions[bottomLeading] ? .soft : .hard,
+                               bottom: regions[bottomLeading] == regions[bottomTrailing] ? .soft : .hard,
+                               trailing: regions[topTrailing] == regions[bottomTrailing] ? .soft : .hard)
+            case let (.content(row), .innerSeparator(c1, c2)):
+                let p1 = Position(row: row, column: c1)
+                let p2 = Position(row: row, column: c2)
+                return .border(top: regions[p1] == regions[p2] ? .soft : .hard,
+                               leading: .none,
+                               bottom: regions[p1] == regions[p2] ? .soft : .hard,
+                               trailing: .none)
+            case let (.innerSeparator(r1, r2), .content(column)):
+                let p1 = Position(row: r1, column: column)
+                let p2 = Position(row: r2, column: column)
+                return .border(top: .none,
+                               leading: regions[p1] == regions[p2] ? .soft : .hard,
+                               bottom: .none,
+                               trailing: regions[p1] == regions[p2] ? .soft : .hard)
+            case let (.content(row), .content(column)):
+                let position = Position(row: row, column: column)
+                return .content(board[position])
+        }
     }
 }
 

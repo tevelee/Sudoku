@@ -36,6 +36,8 @@ public struct Slice<T> {
     }
 }
 
+public typealias GridSlice = Slice<Position>
+
 extension Slice: Equatable where T: Equatable {}
 extension Slice: Hashable where T: Hashable {}
 
@@ -49,6 +51,18 @@ struct Grid: Hashable {
     func contains(position: Position) -> Bool {
         (0 ..< size.width).contains(position.column) && (0 ..< size.height).contains(position.row)
     }
+
+    func rectangularSlicing(allowStripes: Bool = false) -> Slicing? {
+        RectangularRegions(grid: self, allowStripes: allowStripes).map(Set.init).map(Slicing.init)
+    }
+
+    func jigsawSlicing(allowStripes: Bool = false) -> Slicing {
+        Slicing(slices: [])
+    }
+}
+
+public struct Slicing {
+    let slices: Set<GridSlice>
 }
 
 struct Rows: Sequence {
@@ -62,7 +76,7 @@ struct Rows: Sequence {
         let grid: Grid
         var row: Int = 0
 
-        mutating func next() -> Slice<Position>? {
+        mutating func next() -> GridSlice? {
             defer { row += 1 }
             guard row < grid.numberOfRows else {
                 return nil
@@ -86,7 +100,7 @@ struct Columns: Sequence {
         let grid: Grid
         var column: Int = 0
 
-        mutating func next() -> Slice<Position>? {
+        mutating func next() -> GridSlice? {
             defer { column += 1 }
             guard column < grid.numberOfColumns else {
                 return nil
@@ -141,7 +155,7 @@ struct RectangularRegions: Sequence {
         var row: Int = 0
         var column: Int = 0
 
-        mutating func next() -> Slice<Position>? {
+        mutating func next() -> GridSlice? {
             guard row < numberOfRegionRows, column < numberOfRegionColumns else {
                 return nil
             }

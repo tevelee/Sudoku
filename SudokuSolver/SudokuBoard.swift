@@ -15,9 +15,9 @@ import Algorithms
 public struct SudokuBoard<Value> {
     private var rawData: [[Value?]]
 
-    let positionsOfRowSlices: AnySequence<Slice<Position>>
-    let positionsOfColumnSlices: AnySequence<Slice<Position>>
-    let positionsOfRegionSlices: AnySequence<Slice<Position>>
+    let positionsOfRowSlices: AnySequence<GridSlice>
+    let positionsOfColumnSlices: AnySequence<GridSlice>
+    let positionsOfRegionSlices: AnySequence<GridSlice>
 
     public var rows: some Sequence<Slice<Value?>> {
         values(from: positionsOfRowSlices)
@@ -29,7 +29,7 @@ public struct SudokuBoard<Value> {
         values(from: positionsOfRegionSlices)
     }
 
-    private func values(from division: some Sequence<Slice<Position>>) -> some Sequence<Slice<Value?>> {
+    private func values(from division: some Sequence<GridSlice>) -> some Sequence<Slice<Value?>> {
         division.lazy.map {
             $0.map { self[$0] }
         }
@@ -42,13 +42,27 @@ public struct SudokuBoard<Value> {
         rawData.lazy.flatMap { $0.lazy }
     }
 
+    public struct Slicing {
+        let factory: (Grid) -> [GridSlice]?
+
+        static func rectangular(allowStripes: Bool) -> Slicing {
+            .init { grid in
+                RectangularRegions(grid: grid, allowStripes: allowStripes).map(Array.init)
+            }
+        }
+    }
+
     public enum Regions {
-        case custom([Slice<Position>])
+        case custom([GridSlice])
         case rectangular(allowStripes: Bool)
 
         static func empty() -> Self {
             .custom([])
         }
+
+//        static func jigsaw() -> Self {
+//            .custom([])
+//        }
     }
 
     public init(_ rows: [[Value?]], regions: Regions = .rectangular(allowStripes: false)) throws {
