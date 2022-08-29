@@ -12,6 +12,70 @@ import Algorithms
 // - Codify advanced rules: one in a row/col/seg, knight moves, diagonals, odds/evens. Validator/Solver can work against these rules
 // - Generate jigsaw regions
 
+public protocol SlicingStrategy {
+    func slices(for grid: Grid) throws -> [GridSlice]
+}
+
+public struct NoSlicing: SlicingStrategy {
+    public init() {}
+
+    public func slices(for grid: Grid) throws -> [GridSlice] {
+        []
+    }
+}
+
+public struct RegularSudokuSlicing: SlicingStrategy {
+    private let allowStripes: Bool
+
+    public init(allowStripes: Bool = false) {
+        self.allowStripes = allowStripes
+    }
+
+    public func slices(for grid: Grid) throws -> [GridSlice] {
+        guard let regions = RectangularRegions(grid: grid, allowStripes: allowStripes) else {
+            throw SlicingError.mustBeDivisibleToRegions
+        }
+        return Array(regions)
+    }
+}
+
+public struct XSlicing: SlicingStrategy {
+    public init() {}
+
+    public func slices(for grid: Grid) throws -> [GridSlice] {
+        guard grid.size.width == grid.size.height else {
+            throw SlicingError.mustBeSquared
+        }
+        let size = grid.size.width
+        return [
+            GridSlice(name: "Diagonal SW-NE", items: (0 ..< size).map { Position(row: size - $0, column: $0) }),
+            GridSlice(name: "Diagonal NW-SE", items: (0 ..< size).map { Position(row: $0, column: size - $0) })
+        ]
+    }
+}
+
+struct JigsawSlicing: SlicingStrategy {
+    func slices(for grid: Grid) throws -> [GridSlice] {
+        [] // TODO: figure out a jigsaw pattern factory
+    }
+}
+
+public struct AnySlicing: SlicingStrategy {
+    private let _slices: (Grid) throws -> [GridSlice]
+
+    init(_ slices: @escaping (Grid) throws -> [GridSlice]) {
+        _slices = slices
+    }
+
+    public init(_ slicing: SlicingStrategy) {
+        self.init(slicing.slices)
+    }
+
+    public func slices(for grid: Grid) throws -> [GridSlice] {
+        try _slices(grid)
+    }
+}
+
 public struct SudokuBoard<Value> {
     private var rawData: [[Value?]]
 
@@ -42,30 +106,7 @@ public struct SudokuBoard<Value> {
         rawData.lazy.flatMap { $0.lazy }
     }
 
-    public struct Slicing {
-        let factory: (Grid) -> [GridSlice]?
-
-        static func rectangular(allowStripes: Bool) -> Slicing {
-            .init { grid in
-                RectangularRegions(grid: grid, allowStripes: allowStripes).map(Array.init)
-            }
-        }
-    }
-
-    public enum Regions {
-        case custom([GridSlice])
-        case rectangular(allowStripes: Bool)
-
-        static func empty() -> Self {
-            .custom([])
-        }
-
-//        static func jigsaw() -> Self {
-//            .custom([])
-//        }
-    }
-
-    public init(_ rows: [[Value?]], regions: Regions = .rectangular(allowStripes: false)) throws {
+    public init(_ rows: [[Value?]], slicing: SlicingStrategy = RegularSudokuSlicing()) throws {
         if rows.isEmpty || rows.contains(where: \.isEmpty) {
             throw IncorrectSizeError.mustHavePositiveSize
         }
@@ -75,24 +116,18 @@ public struct SudokuBoard<Value> {
         let grid = Grid(width: width, height: height)
         self.positionsOfRowSlices = AnySequence(Rows(grid: grid))
         self.positionsOfColumnSlices = AnySequence(Columns(grid: grid))
-        switch regions {
-            case let .custom(regions):
-                guard regions.flatMap(\.items).allSatisfy(grid.contains) else {
-                    throw SlicingError.positionOutOfBounds
-                }
-                self.positionsOfRegionSlices = AnySequence(regions)
-            case let .rectangular(allowStripes):
-                guard let regions = RectangularRegions(grid: grid, allowStripes: allowStripes) else {
-                    throw IncorrectSizeError.mustBeDivisibleToRegions
-                }
-                self.positionsOfRegionSlices = AnySequence(regions)
+
+        let slices = try slicing.slices(for: grid)
+        guard slices.flatMap(\.items).allSatisfy(grid.contains) else {
+            throw SlicingError.positionOutOfBounds
         }
+        self.positionsOfRegionSlices = AnySequence(slices)
     }
 
     public init(partiallyComplete: [[Value?]] = [],
                 width: Int = 9,
                 height: Int = 9,
-                regions: Regions = .rectangular(allowStripes: false)) throws {
+                slicing: SlicingStrategy = RegularSudokuSlicing()) throws {
         guard width > 0, height > 0 else {
             throw IncorrectSizeError.mustHavePositiveSize
         }
@@ -102,7 +137,7 @@ public struct SudokuBoard<Value> {
         let rows = partiallyComplete.map {
             $0.padded(with: nil, desiredSize: width)
         }.padded(with: Array(repeating: nil, count: width), desiredSize: height)
-        try self.init(rows, regions: regions)
+        try self.init(rows, slicing: slicing)
     }
 
     func firstIncompletePosition() -> Position? {
@@ -151,11 +186,12 @@ extension SudokuBoard: CustomStringConvertible where Value: CustomStringConverti
 public enum IncorrectSizeError: Error, Equatable {
     case mustHavePositiveSize
     case valuesExceedProvidedSize
-    case mustBeDivisibleToRegions
 }
 
 public enum SlicingError: Error, Equatable {
     case positionOutOfBounds
+    case mustBeDivisibleToRegions
+    case mustBeSquared
 }
 
 private extension Array {

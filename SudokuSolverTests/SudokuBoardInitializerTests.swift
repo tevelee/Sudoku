@@ -10,11 +10,11 @@ final class RegularBoardInitializerTests: XCTestCase {
     }
 
     func test_whenCreatingValidBoardsWithExplicitSize_thenInitializationSucceeds() throws {
-        _ = try SudokuBoard<Int>(width: 1, height: 1, regions: .rectangular(allowStripes: true))
-        _ = try SudokuBoard<Int>(width: 2, height: 2, regions: .rectangular(allowStripes: true))
-        _ = try SudokuBoard<Int>(width: 3, height: 3, regions: .rectangular(allowStripes: true))
-        _ = try SudokuBoard<Int>(width: 2, height: 3, regions: .rectangular(allowStripes: true))
-        _ = try SudokuBoard<Int>(width: 5, height: 5, regions: .rectangular(allowStripes: true))
+        _ = try SudokuBoard<Int>(width: 1, height: 1, slicing: RegularSudokuSlicing(allowStripes: true))
+        _ = try SudokuBoard<Int>(width: 2, height: 2, slicing: RegularSudokuSlicing(allowStripes: true))
+        _ = try SudokuBoard<Int>(width: 3, height: 3, slicing: RegularSudokuSlicing(allowStripes: true))
+        _ = try SudokuBoard<Int>(width: 2, height: 3, slicing: RegularSudokuSlicing(allowStripes: true))
+        _ = try SudokuBoard<Int>(width: 5, height: 5, slicing: RegularSudokuSlicing(allowStripes: true))
 
         _ = try SudokuBoard<Int>()
         _ = try SudokuBoard<Int>(width: 4, height: 4)
@@ -24,7 +24,7 @@ final class RegularBoardInitializerTests: XCTestCase {
     }
 
     func test_whenCreatingInvalidBoardsWithExplicitSize_thenInitializationThrows() throws {
-        var error: IncorrectSizeError = try expectToThrow {
+        var error: SlicingError = try expectToThrow {
             _ = try SudokuBoard<Int>(width: 1, height: 1)
         }
         XCTAssertEqual(error, .mustBeDivisibleToRegions)
@@ -51,7 +51,7 @@ final class RegularBoardInitializerTests: XCTestCase {
     }
 
     func test_whenCreatingBoardWithTooFewRows_thenInitializationThrows() throws {
-        let error: IncorrectSizeError = try expectToThrow {
+        let error: SlicingError = try expectToThrow {
             _ = try SudokuBoard<Int>([
                 [1, 2, 3]
             ])

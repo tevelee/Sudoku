@@ -41,28 +41,16 @@ public typealias GridSlice = Slice<Position>
 extension Slice: Equatable where T: Equatable {}
 extension Slice: Hashable where T: Hashable {}
 
-struct Grid: Hashable {
-    let size: Size
+public struct Grid: Hashable {
+    public let size: Size
 
-    init(width: Int, height: Int) {
+    public init(width: Int, height: Int) {
         size = Size(width: width, height: height)
     }
 
-    func contains(position: Position) -> Bool {
+    public func contains(position: Position) -> Bool {
         (0 ..< size.width).contains(position.column) && (0 ..< size.height).contains(position.row)
     }
-
-    func rectangularSlicing(allowStripes: Bool = false) -> Slicing? {
-        RectangularRegions(grid: self, allowStripes: allowStripes).map(Set.init).map(Slicing.init)
-    }
-
-    func jigsawSlicing(allowStripes: Bool = false) -> Slicing {
-        Slicing(slices: [])
-    }
-}
-
-public struct Slicing {
-    let slices: Set<GridSlice>
 }
 
 struct Rows: Sequence {
