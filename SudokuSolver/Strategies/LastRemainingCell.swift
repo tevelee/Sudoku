@@ -9,27 +9,27 @@ final class LastRemainingCellStrategy<Value: Hashable & CustomStringConvertible>
 
     func nextMove(on board: SudokuBoard<Value>, cache: Cache) -> Move<Value>? {
         for region in board.positionsOfRegionSlices {
-            var rowsCovered: [Position: Set<Value>] = [:]
-            var columnsCovered: [Position: Set<Value>] = [:]
+            var positionsToRowValues: [Position: Set<Value>] = [:]
+            var positionsToColumnValues: [Position: Set<Value>] = [:]
             for position in region.items {
                 guard let row = cache.positionsToRows[position],
                       let column = cache.positionsToColumns[position] else {
                     continue
                 }
-                rowsCovered[position, default: []].formUnion(row.items.compactMap(board.value))
-                columnsCovered[position, default: []].formUnion(column.items.compactMap(board.value))
+                positionsToRowValues[position, default: []].formUnion(row.items.compactMap(board.value))
+                positionsToColumnValues[position, default: []].formUnion(column.items.compactMap(board.value))
             }
 
+            let allPositions = Set(region.items)
             for value in allSymbols {
-                let rowsCoveredByValue = Set(rowsCovered.filter { $0.value.contains(value) }.map(\.key))
-                let columnsCoveredByValue = Set(columnsCovered.filter { $0.value.contains(value) }.map(\.key))
-                let positionsCoveredByValue = rowsCoveredByValue.union(columnsCoveredByValue)
-                let allPositions = Set(region.items)
+                let positionsInRowsCoveredByValue = Set(positionsToRowValues.filter { $0.value.contains(value) }.map(\.key))
+                let positionsInColumnsCoveredByValue = Set(positionsToColumnValues.filter { $0.value.contains(value) }.map(\.key))
+                let positionsCoveredByValue = positionsInRowsCoveredByValue.union(positionsInColumnsCoveredByValue)
                 if positionsCoveredByValue.count == allPositions.count - 1, let missingPosition = allPositions.subtracting(positionsCoveredByValue).first,
                    let row = cache.positionsToRows[missingPosition],
                    let column = cache.positionsToColumns[missingPosition] {
-                    let rowsCovered = Set(rowsCoveredByValue.compactMap { cache.positionsToRows[$0]?.name }).sorted()
-                    let columnsCovered = Set(columnsCoveredByValue.compactMap { cache.positionsToColumns[$0]?.name }).sorted()
+                    let rowsCovered = Set(positionsInRowsCoveredByValue.compactMap { cache.positionsToRows[$0]?.name }).sorted()
+                    let columnsCovered = Set(positionsInColumnsCoveredByValue.compactMap { cache.positionsToColumns[$0]?.name }).sorted()
                     let slicesCovered = (rowsCovered + columnsCovered).list()
                     return Move(reason: "Symbol \(value) covers all fields in \(region.name) except \(row.name), \(column.name)",
                                 details: "In \(region.name), \(slicesCovered) contain \(value), it must be at \(row.name), \(column.name)",

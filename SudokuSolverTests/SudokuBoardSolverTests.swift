@@ -28,7 +28,7 @@ final class RegularBoardSolverTests: XCTestCase {
         let solutions = solver.iterativeSolve(board)
 
         // Then
-        XCTAssertEqual(solutions, .solvable(solutions: [.init(moves: [])]))
+        XCTAssertEqual(solutions, .solvable(Solution(moves: [])))
     }
 
     func test_whenAttemptingToSolveBoardWithOneMissingValue_thenFindsMissingValue() {
@@ -52,20 +52,41 @@ final class RegularBoardSolverTests: XCTestCase {
         let solutions = solver.iterativeSolve(board)
 
         // Then
-        XCTAssertEqual(solutions, .solvable(solutions: [
-            Solution(moves: [
-                Move(reason: "2 is the only symbol missing from Row 1",
-                     details: "Row 1 already contains 8 out of 9 values: 1, 3, 4, 5, 6, 7, 8, and 9",
-                     value: 2,
-                     position: Position(row: 0, column: 1))
-            ]),
-            Solution(moves: [
-                Move(reason: "2 is the only symbol missing at Row 1, Column 2",
-                     details: "Row 1 contains 1, 3, 4, 5, 6, 7, 8, and 9; Column 2 contains 1, 3, 4, 5, 6, 7, 8, and 9; Region 1 contains 1, 3, 4, 5, 6, 7, 8, and 9",
-                     value: 2,
-                     position: Position(row: 0, column: 1))
-            ])
-        ]))
+        XCTAssertEqual(solutions, .solvable(Solution(moves: [
+            Move(reason: "2 is the only symbol missing from Row 1",
+                 details: "Row 1 already contains 8 out of 9 values: 1, 3, 4, 5, 6, 7, 8, and 9",
+                 value: 2,
+                 position: Position(row: 0, column: 1))
+        ])))
+    }
+
+    func test_whenAttemptingToSolveRealBoard_thenFindsSolution() {
+        // Given
+        let board = try! SudokuBoard<Int>([
+            [  3,   4,   2,        nil,   8, nil,       nil, nil, nil],
+            [  5, nil, nil,          9, nil, nil,       nil, nil, nil],
+            [nil,   9, nil,        nil, nil,   4,         3,   8, nil],
+
+            [nil,   2, nil,          3, nil,   5,         1, nil, nil],
+            [nil,   5, nil,          7, nil,   6,       nil,   4, nil],
+            [nil,   7, nil,        nil,   9,   1,         6,   5,   2],
+
+            [  6, nil, nil,        nil,   7,   9,         2,   3,   1],
+            [  7, nil, nil,        nil,   6, nil,         8, nil, nil],
+            [  2, nil, nil,          5,   3, nil,         4, nil, nil],
+        ])
+        let contentRule = ContentRule(allowedSymbols: 1...9)
+        let uniquenessRule = UniqueSymbolsRule(rowsAndColumnsAndRegions: board)
+        let solver = SudokuSolver(rules: [contentRule, uniquenessRule])
+
+        // When
+        let solutions = solver.iterativeSolve(board)
+
+        // Then
+        print(solver.availableMoves(board))
+        if case .solvable(let solution) = solutions {
+            print(solution)
+        }
     }
 
     func test_whenAttemptingToQuickSolveBoard_thenProvidesSolution() {

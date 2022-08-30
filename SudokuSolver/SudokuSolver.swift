@@ -9,20 +9,28 @@ public final class SudokuSolver<Value: Hashable & CustomStringConvertible> {
         self.rules = rules
         strategies = [
             OneMissingSymbolStrategy<Value>(rules: rules),
+            LastRemainingCellStrategy<Value>(rules: rules),
             LastPossibleSymbolStrategy<Value>(rules: rules)
         ]
     }
 
-    public func iterativeSolve(_ board: SudokuBoard<Value>) -> IterativeSolutionResult<Value> {
-        solve(board, moves: [])
+    public func iterativeSolve(_ board: SudokuBoard<Value>) -> IterativeSolutionResult<Solution<Value>> {
+        solve(board, moves: [], findFirstSolutionOnly: true).map { $0[0] }
     }
 
-    private func solve(_ board: SudokuBoard<Value>, moves: [Move<Value>]) -> IterativeSolutionResult<Value> {
+    public func availableMoves(_ board: SudokuBoard<Value>) -> [Move<Value>] {
+        let cache = Cache(board: board)
+        return strategies.compactMap { $0.nextMove(on: board, cache: cache) }
+    }
+
+    private func solve(_ board: SudokuBoard<Value>,
+                       moves: [Move<Value>],
+                       findFirstSolutionOnly: Bool = true) -> IterativeSolutionResult<[Solution<Value>]> {
         guard board.isValid(against: rules) else {
             return .unsolvable
         }
         if board.isCompleted {
-            return .solvable(solutions: [Solution(moves: moves)])
+            return .solvable([Solution(moves: moves)])
         }
         var result: [Solution<Value>] = []
         let cache = Cache(board: board)
@@ -32,10 +40,13 @@ public final class SudokuSolver<Value: Hashable & CustomStringConvertible> {
                 newBoard[move.position] = move.value
                 if case .solvable(let solutions) = solve(newBoard, moves: moves + [move]) {
                     result.append(contentsOf: solutions)
+                    if findFirstSolutionOnly {
+                        return .solvable(result)
+                    }
                 }
             }
         }
-        return result.isEmpty ? .couldNotSolve : .solvable(solutions: result)
+        return result.isEmpty ? .couldNotSolve : .solvable(result)
     }
 }
 
@@ -109,13 +120,24 @@ private extension Sequence {
     }
 }
 
-public enum IterativeSolutionResult<Value> {
-    case solvable(solutions: [Solution<Value>])
+public enum IterativeSolutionResult<Solution> {
+    case solvable(Solution)
     case unsolvable
     case couldNotSolve
+
+    func map<K>(_ transform: (Solution) -> K) -> IterativeSolutionResult<K> {
+        switch self {
+            case .solvable(let solution):
+                return .solvable(transform(solution))
+            case .unsolvable:
+                return .unsolvable
+            case .couldNotSolve:
+                return .couldNotSolve
+        }
+    }
 }
 
-extension IterativeSolutionResult: Equatable where Value: Equatable {}
+extension IterativeSolutionResult: Equatable where Solution: Equatable {}
 
 public enum QuickSolutionResult<Value> {
     case solvable(SudokuBoard<Value>)
