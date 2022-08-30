@@ -1,7 +1,7 @@
 import XCTest
 @testable import SudokuSolver
 
-final class SudokuSolverStrategyTests: XCTestCase {
+final class OneMissingSymbolStrategyTests: XCTestCase {
     func test_whenOneIsMissingInRow_thenFindsMove() throws {
         // Given
         let board = try! SudokuBoard([
@@ -12,7 +12,7 @@ final class SudokuSolverStrategyTests: XCTestCase {
         ])
         let contentRule = ContentRule(allowedSymbols: 1...4)
         let uniquenessRule = UniqueSymbolsRule(rowsAndColumnsAndRegions: board)
-        let strategy = OneMissingElementStrategy(rules: [contentRule, uniquenessRule])
+        let strategy = OneMissingSymbolStrategy(rules: [contentRule, uniquenessRule])
 
         // When
         let result = strategy.nextMove(on: board)
@@ -34,7 +34,7 @@ final class SudokuSolverStrategyTests: XCTestCase {
         ])
         let contentRule = ContentRule(allowedSymbols: 1...4)
         let uniquenessRule = UniqueSymbolsRule(rowsAndColumnsAndRegions: board)
-        let strategy = OneMissingElementStrategy(rules: [contentRule, uniquenessRule])
+        let strategy = OneMissingSymbolStrategy(rules: [contentRule, uniquenessRule])
 
         // When
         let result = strategy.nextMove(on: board)
@@ -56,7 +56,7 @@ final class SudokuSolverStrategyTests: XCTestCase {
         ])
         let contentRule = ContentRule(allowedSymbols: 1...4)
         let uniquenessRule = UniqueSymbolsRule(rowsAndColumnsAndRegions: board)
-        let strategy = OneMissingElementStrategy(rules: [contentRule, uniquenessRule])
+        let strategy = OneMissingSymbolStrategy(rules: [contentRule, uniquenessRule])
 
         // When
         let result = strategy.nextMove(on: board)

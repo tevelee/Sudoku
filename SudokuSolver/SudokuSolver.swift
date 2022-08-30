@@ -8,7 +8,8 @@ public final class SudokuSolver<Value: Hashable & CustomStringConvertible> {
     public init(rules: [any SudokuRule<Value>] = []) {
         self.rules = rules
         strategies = [
-            OneMissingElementStrategy<Value>(rules: rules)
+            OneMissingSymbolStrategy<Value>(rules: rules),
+            LastPossibleSymbolStrategy<Value>(rules: rules)
         ]
     }
 
@@ -49,58 +50,6 @@ extension SudokuBoard {
             return false
         }
         return true
-    }
-}
-
-protocol SudokuSolvingStrategy<Value> {
-    associatedtype Value: CustomStringConvertible
-    func nextMove(on board: SudokuBoard<Value>) -> Move<Value>?
-}
-
-public struct Move<Value> {
-    let reason: String
-    let value: Value
-    let position: Position
-}
-
-extension Move: Equatable where Value: Equatable {}
-
-final class OneMissingElementStrategy<Value: Hashable & CustomStringConvertible>: SudokuSolvingStrategy {
-    private let rules: [any SudokuRule<Value>]
-
-    init(rules: [any SudokuRule<Value>]) {
-        self.rules = rules
-    }
-
-    func nextMove(on board: SudokuBoard<Value>) -> Move<Value>? {
-        nextMove(for: board.rows) ?? nextMove(for: board.columns) ?? nextMove(for: board.regions)
-    }
-
-    private func nextMove(for slices: some Sequence<BoardSlice<Value>>) -> Move<Value>? {
-        for slice in slices {
-            let items = Set(slice.items.compactMap(\.value))
-            if items.count == symbols.count - 1,
-               let emptyPosition = slice.items.first(where: { $0.value == nil })?.position,
-               let missingValue = symbols.subtracting(items).first {
-                return Move(reason: "\(missingValue) is the only symbol missing from \(slice.name)", value: missingValue, position: emptyPosition)
-            }
-        }
-        return nil
-    }
-
-    private lazy var symbols = contentRule().map { Set($0.allowedSymbols) } ?? []
-
-    private func contentRule() -> ContentRule<Value>? {
-        for rule in rules {
-            if let contentRule = isContentRule(rule) {
-                return contentRule
-            }
-        }
-        return nil
-    }
-
-    private func isContentRule(_ value: some SudokuRule<Value>) -> ContentRule<Value>? {
-        value as? ContentRule<Value>
     }
 }
 

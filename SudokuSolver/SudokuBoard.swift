@@ -1,16 +1,10 @@
 import Foundation
 import Algorithms
 
-// Project TODOs
-// - Quick solver for first solution (backtrace)
-// - Solver with strategies
-// - Diagnostics for solver (highlighting next region and logical step)
 // - Valid board generator
+// - Jigsaw region generator
 // - Board scanner (reader) from string/image input
 // - UI
-// - Irregular board types: X board, board with variable shaped regions, NxM size, etc.
-// - Codify advanced rules: one in a row/col/seg, knight moves, diagonals, odds/evens. Validator/Solver can work against these rules
-// - Generate jigsaw regions
 
 public typealias BoardSlice<Value> = Slice<(position: Position, value: Value?)>
 

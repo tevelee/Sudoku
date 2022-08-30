@@ -52,9 +52,20 @@ final class RegularBoardSolverTests: XCTestCase {
         let solutions = solver.iterativeSolve(board)
 
         // Then
-        XCTAssertEqual(solutions, .solvable(solutions: [.init(moves: [
-            Move(reason: "2 is the only symbol missing from Row 1", value: 2, position: Position(row: 0, column: 1))
-        ])]))
+        XCTAssertEqual(solutions, .solvable(solutions: [
+            Solution(moves: [
+                Move(reason: "2 is the only symbol missing from Row 1",
+                     details: "Row 1 already contains 8 out of 9 values: 1, 3, 4, 5, 6, 7, 8, and 9",
+                     value: 2,
+                     position: Position(row: 0, column: 1))
+            ]),
+            Solution(moves: [
+                Move(reason: "2 is the only symbol missing at Row 1, Column 2",
+                     details: "Row 1 contains 1, 3, 4, 5, 6, 7, 8, and 9; Column 2 contains 1, 3, 4, 5, 6, 7, 8, and 9; Region 1 contains 1, 3, 4, 5, 6, 7, 8, and 9",
+                     value: 2,
+                     position: Position(row: 0, column: 1))
+            ])
+        ]))
     }
 
     func test_whenAttemptingToQuickSolveBoard_thenProvidesSolution() {
