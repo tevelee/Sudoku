@@ -13,10 +13,42 @@ public final class SudokuSolver<Value: Hashable & CustomStringConvertible> {
     }
 
     public func iterativeSolve(_ board: SudokuBoard<Value>) -> IterativeSolutionResult<Value> {
-        if board.values.allSatisfy({ $0 != nil }) {
-            return .solvable(solutions: [.init(steps: [])])
+        solve(board, moves: [])
+    }
+
+    private func solve(_ board: SudokuBoard<Value>, moves: [Move<Value>]) -> IterativeSolutionResult<Value> {
+        guard board.isValid(against: rules) else {
+            return .unsolvable
         }
-        return .couldNotSolve
+        if board.isCompleted {
+            return .solvable(solutions: [Solution(moves: moves)])
+        }
+        var result: [Solution<Value>] = []
+        for strategy in strategies {
+            if let move = strategy.nextMove(on: board) {
+                var newBoard = board
+                newBoard[move.position] = move.value
+                if case .solvable(let solutions) = solve(newBoard, moves: moves + [move]) {
+                    result.append(contentsOf: solutions)
+                }
+            }
+        }
+        return result.isEmpty ? .couldNotSolve : .solvable(solutions: result)
+    }
+}
+
+extension SudokuBoard {
+    var isCompleted: Bool {
+        values.allSatisfy { $0 != nil }
+    }
+
+    func isValid(against rules: [any SudokuRule<Value>]) -> Bool {
+        guard rows.isValid(against: rules),
+              columns.isValid(against: rules),
+              regions.isValid(against: rules) else {
+            return false
+        }
+        return true
     }
 }
 
@@ -25,30 +57,38 @@ protocol SudokuSolvingStrategy<Value> {
     func nextMove(on board: SudokuBoard<Value>) -> Move<Value>?
 }
 
-struct Move<Value> {
+public struct Move<Value> {
     let reason: String
     let value: Value
     let position: Position
 }
 
-struct OneMissingElementStrategy<Value: Hashable & CustomStringConvertible>: SudokuSolvingStrategy {
-    let rules: [any SudokuRule<Value>]
+extension Move: Equatable where Value: Equatable {}
+
+final class OneMissingElementStrategy<Value: Hashable & CustomStringConvertible>: SudokuSolvingStrategy {
+    private let rules: [any SudokuRule<Value>]
+
+    init(rules: [any SudokuRule<Value>]) {
+        self.rules = rules
+    }
 
     func nextMove(on board: SudokuBoard<Value>) -> Move<Value>? {
-        guard let contentRule = self.contentRule() else {
-            return nil
-        }
-        let symbols = Set(contentRule.allowedSymbols)
-        for slice in board.rows {
+        nextMove(for: board.rows) ?? nextMove(for: board.columns) ?? nextMove(for: board.regions)
+    }
+
+    private func nextMove(for slices: some Sequence<BoardSlice<Value>>) -> Move<Value>? {
+        for slice in slices {
             let items = Set(slice.items.compactMap(\.value))
             if items.count == symbols.count - 1,
                let emptyPosition = slice.items.first(where: { $0.value == nil })?.position,
                let missingValue = symbols.subtracting(items).first {
-                return Move(reason: "One missing value in \(slice.name)", value: missingValue, position: emptyPosition)
+                return Move(reason: "\(missingValue) is the only symbol missing from \(slice.name)", value: missingValue, position: emptyPosition)
             }
         }
         return nil
     }
+
+    private lazy var symbols = contentRule().map { Set($0.allowedSymbols) } ?? []
 
     private func contentRule() -> ContentRule<Value>? {
         for rule in rules {
@@ -136,7 +176,7 @@ public enum QuickSolutionResult<Value> {
 extension QuickSolutionResult: Equatable where Value: Equatable {}
 
 public struct Solution<Value> {
-    public let steps: [SudokuBoard<Value>]
+    public let moves: [Move<Value>]
 }
 
 extension Solution: Equatable where Value: Equatable {}

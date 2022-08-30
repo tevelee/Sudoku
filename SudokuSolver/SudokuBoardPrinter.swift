@@ -1,12 +1,12 @@
 import Foundation
 import Algorithms
 
-public enum Component {
+public enum GridElement {
     case content((any CustomStringConvertible)?)
     case spacing
     case border(Border)
 
-    static func border(top: Border.Style, leading: Border.Style, bottom: Border.Style, trailing: Border.Style) -> Component {
+    static func border(top: Border.Style, leading: Border.Style, bottom: Border.Style, trailing: Border.Style) -> GridElement {
         .border(Border(top: top, leading: leading, bottom: bottom, trailing: trailing))
     }
 }
@@ -37,18 +37,18 @@ public struct Border: Equatable {
 }
 
 public protocol SudokuComponentRenderer {
-    func render(component: Component) -> String
+    func render(_ element: GridElement) -> String
 }
 
 public class ASCIIRenderer: SudokuComponentRenderer {
     private let threshold: Border.Style
 
-    public init(drawSeparators: Bool = false) {
-        self.threshold = drawSeparators ? .soft : .hard
+    public init(strokeSeparators: Bool = false) {
+        self.threshold = strokeSeparators ? .soft : .hard
     }
 
-    public func render(component: Component) -> String {
-        switch component {
+    public func render(_ element: GridElement) -> String {
+        switch element {
             case .spacing: return " "
             case .content(let value): return value?.description ?? " "
             case .border(let border): return render(border)
@@ -87,8 +87,8 @@ public class BoxedRenderer: SudokuComponentRenderer {
         self.style = style
     }
 
-    public func render(component: Component) -> String {
-        switch component {
+    public func render(_ element: GridElement) -> String {
+        switch element {
             case .spacing: return " "
             case .content(let value): return value?.description ?? " "
             case .border(let border):
@@ -155,22 +155,25 @@ public class BoxedRenderer: SudokuComponentRenderer {
 
             default:
                 assertionFailure("Unknown symbol")
-                return ""
+                return " "
         }
     }
 }
 
 public final class SudokuBoardPrinter {
     private let borderSize: Int
+    private let drawSeparators: Bool
     private let horizontalPadding: Int
     private let verticalPadding: Int
     private let renderer: any SudokuComponentRenderer
 
-    init(drawBorder: Bool = true,
+    init(drawBorders: Bool = true,
+         drawSeparators: Bool = true,
          horizontalPadding: Int = 1,
          verticalPadding: Int = 0,
          renderer: any SudokuComponentRenderer = ASCIIRenderer()) {
-        self.borderSize = drawBorder ? 1 : 0
+        self.borderSize = drawBorders ? 1 : 0
+        self.drawSeparators = drawSeparators
         self.horizontalPadding = horizontalPadding
         self.verticalPadding = verticalPadding
         self.renderer = renderer
@@ -192,19 +195,11 @@ public final class SudokuBoardPrinter {
                 }
             }
 
-            let vertical = (0 ..< board.height)
-                .lazy
-                .interspersedMap(Tile.content, with: Tile.innerSeparator)
-                .prepended(with: .outerSeparator(.leading), count: borderSize)
-                .appended(with: .outerSeparator(.trailing), count: borderSize)
+            let vertical = tiles(count: board.height)
             for row in vertical {
                 var rowToPrint = ""
                 var rowToPrintAroundContentRow = ""
-                let horizontal = (0 ..< board.width)
-                    .lazy
-                    .interspersedMap(Tile.content, with: Tile.innerSeparator)
-                    .prepended(with: .outerSeparator(.leading), count: borderSize)
-                    .appended(with: .outerSeparator(.trailing), count: borderSize)
+                let horizontal = tiles(count: board.width)
                 for column in horizontal {
                     let content = render(component(row: row, column: column, board: board, regions: regions))
 
@@ -243,11 +238,24 @@ public final class SudokuBoardPrinter {
         return result
     }
 
-    private func render(_ component: Component) -> String {
-        renderer.render(component: component)
+    private func tiles(count: Int) -> some Sequence<Tile> {
+        let items = (0 ..< count).lazy
+        let withSeparators: AnySequence<Tile>
+        if drawSeparators {
+            withSeparators = AnySequence(items.interspersedMap(Tile.content, with: Tile.innerSeparator))
+        } else {
+            withSeparators = AnySequence(items.map(Tile.content))
+        }
+        return withSeparators
+            .prepended(with: .outerSeparator(.leading), count: borderSize)
+            .appended(with: .outerSeparator(.trailing), count: borderSize)
     }
 
-    private func component<T: CustomStringConvertible>(row: Tile, column: Tile, board: SudokuBoard<T>, regions: [Position: String]) -> Component {
+    private func render(_ element: GridElement) -> String {
+        renderer.render(element)
+    }
+
+    private func component<T: CustomStringConvertible>(row: Tile, column: Tile, board: SudokuBoard<T>, regions: [Position: String]) -> GridElement {
         switch (row, column) {
             case let (.outerSeparator(row), .outerSeparator(column)):
                 return .border(top: row == .leading ? .none : .hard,

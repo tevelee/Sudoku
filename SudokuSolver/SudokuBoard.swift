@@ -12,6 +12,8 @@ import Algorithms
 // - Codify advanced rules: one in a row/col/seg, knight moves, diagonals, odds/evens. Validator/Solver can work against these rules
 // - Generate jigsaw regions
 
+public typealias BoardSlice<Value> = Slice<(position: Position, value: Value?)>
+
 public struct SudokuBoard<Value> {
     private var rawData: [[Value?]]
 
@@ -19,17 +21,17 @@ public struct SudokuBoard<Value> {
     let positionsOfColumnSlices: AnySequence<GridSlice>
     let positionsOfRegionSlices: AnySequence<GridSlice>
 
-    public var rows: some Sequence<Slice<(position: Position, value: Value?)>> {
+    public var rows: some Sequence<BoardSlice<Value>> {
         values(from: positionsOfRowSlices)
     }
-    public var columns: some Sequence<Slice<(position: Position, value: Value?)>> {
+    public var columns: some Sequence<BoardSlice<Value>> {
         values(from: positionsOfColumnSlices)
     }
-    public var regions: some Sequence<Slice<(position: Position, value: Value?)>> {
+    public var regions: some Sequence<BoardSlice<Value>> {
         values(from: positionsOfRegionSlices)
     }
 
-    private func values(from division: some Sequence<GridSlice>) -> some Sequence<Slice<(position: Position, value: Value?)>> {
+    private func values(from division: some Sequence<GridSlice>) -> some Sequence<BoardSlice<Value>> {
         division.lazy.map {
             $0.map { ($0, self[$0]) }
         }

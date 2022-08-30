@@ -3,7 +3,7 @@ import Foundation
 public protocol SudokuRule<Value> {
     associatedtype Value
 
-    func isValid(_ slice: Slice<(position: Position, value: Value?)>) -> Bool
+    func isValid(_ slice: BoardSlice<Value>) -> Bool
 }
 
 // TODO: check if largest side of board has equal number of elements as allowedSymbols
@@ -16,7 +16,7 @@ public struct ContentRule<Value> {
 }
 
 extension ContentRule: SudokuRule where Value: Equatable {
-    public func isValid(_ slice: Slice<(position: Position, value: Value?)>) -> Bool {
+    public func isValid(_ slice: BoardSlice<Value>) -> Bool {
         slice.items.allSatisfy { item in
             item.value.map(allowedSymbols.contains) ?? true
         }
@@ -46,7 +46,7 @@ private extension Sequence {
 }
 
 extension UniqueSymbolsRule: SudokuRule where Value: Hashable {
-    public func isValid(_ slice: Slice<(position: Position, value: Value?)>) -> Bool {
+    public func isValid(_ slice: BoardSlice<Value>) -> Bool {
         var map: [Value: Int] = [:]
         for item in slice.items {
             if let value = item.value {
