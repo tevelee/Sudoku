@@ -39,6 +39,11 @@
                BlueprintName = "SudokuSolverTests"
                ReferencedContainer = "container:Sudoku.xcodeproj">
             </BuildableReference>
+            <SkippedTests>
+               <Test
+                  Identifier = "RegularBoardSolverTests/test_whenAttemptingToQuickSolveBoard_thenProvidesSolution()">
+               </Test>
+            </SkippedTests>
          </TestableReference>
       </Testables>
    </TestAction>

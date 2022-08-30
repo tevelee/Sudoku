@@ -92,6 +92,10 @@ public struct SudokuBoard<Value> {
         }
     }
 
+    func value(at position: Position) -> Value? {
+        self[position]
+    }
+
     func contains(position: Position) -> Bool {
         Grid(width: width, height: height).contains(position: position)
     }

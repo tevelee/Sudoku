@@ -25,8 +25,9 @@ public final class SudokuSolver<Value: Hashable & CustomStringConvertible> {
             return .solvable(solutions: [Solution(moves: moves)])
         }
         var result: [Solution<Value>] = []
+        let cache = Cache(board: board)
         for strategy in strategies {
-            if let move = strategy.nextMove(on: board) {
+            if let move = strategy.nextMove(on: board, cache: cache) {
                 var newBoard = board
                 newBoard[move.position] = move.value
                 if case .solvable(let solutions) = solve(newBoard, moves: moves + [move]) {

@@ -7,7 +7,7 @@ final class OneMissingSymbolStrategy<Value: Hashable & CustomStringConvertible>:
         self.rules = rules
     }
 
-    func nextMove(on board: SudokuBoard<Value>) -> Move<Value>? {
+    func nextMove(on board: SudokuBoard<Value>, cache: Cache) -> Move<Value>? {
         nextMove(for: board.rows) ?? nextMove(for: board.columns) ?? nextMove(for: board.regions)
     }
 
