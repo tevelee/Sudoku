@@ -182,7 +182,7 @@ public final class SudokuBoardPrinter {
         var result: String = ""
         if Array(board.positionsOfRegionSlices).isEmpty {
             for row in board.rows {
-                Swift.print(row.items.map { render(.content($0)) }.joined(separator: render(.spacing)), to: &result)
+                Swift.print(row.items.map { render(.content($0.value)) }.joined(separator: render(.spacing)), to: &result)
             }
         } else {
             var regions: [Position: String] = [:]
