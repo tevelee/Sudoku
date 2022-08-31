@@ -14,18 +14,18 @@ public final class SudokuSolver<Value: Hashable & CustomStringConvertible> {
         ]
     }
 
-    public func iterativeSolve(_ board: SudokuBoard<Value>) -> IterativeSolutionResult<Solution<Value>> {
-        solve(board, moves: [], findFirstSolutionOnly: true).map { $0[0] }
+    public func iterativeSolve(_ board: SudokuBoard<Value>) async -> IterativeSolutionResult<Solution<Value>> {
+        await solve(board, moves: [], findFirstSolutionOnly: true).map { $0[0] }
     }
 
-    public func availableMoves(_ board: SudokuBoard<Value>) -> [Move<Value>] {
+    public func availableMoves(_ board: SudokuBoard<Value>) -> AsyncStream<Move<Value>> {
         let cache = Cache(board: board)
-        return strategies.compactMap { $0.nextMove(on: board, cache: cache) }
+        return strategies.map { $0.moves(on: board, cache: cache) }.merged()
     }
 
     private func solve(_ board: SudokuBoard<Value>,
                        moves: [Move<Value>],
-                       findFirstSolutionOnly: Bool = true) -> IterativeSolutionResult<[Solution<Value>]> {
+                       findFirstSolutionOnly: Bool = true) async -> IterativeSolutionResult<[Solution<Value>]> {
         guard board.isValid(against: rules) else {
             return .unsolvable
         }
@@ -35,10 +35,10 @@ public final class SudokuSolver<Value: Hashable & CustomStringConvertible> {
         var result: [Solution<Value>] = []
         let cache = Cache(board: board)
         for strategy in strategies {
-            if let move = strategy.nextMove(on: board, cache: cache) {
+            if let move = await strategy.nextMove(on: board, cache: cache) {
                 var newBoard = board
                 newBoard[move.position] = move.value
-                if case .solvable(let solutions) = solve(newBoard, moves: moves + [move]) {
+                if case .solvable(let solutions) = await solve(newBoard, moves: moves + [move]) {
                     result.append(contentsOf: solutions)
                     if findFirstSolutionOnly {
                         return .solvable(result)
@@ -46,7 +46,11 @@ public final class SudokuSolver<Value: Hashable & CustomStringConvertible> {
                 }
             }
         }
-        return result.isEmpty ? .couldNotSolve : .solvable(result)
+        if result.isEmpty {
+            return .couldNotSolve
+        } else {
+            return .partialSolution(result)
+        }
     }
 }
 
@@ -124,6 +128,7 @@ public enum IterativeSolutionResult<Solution> {
     case solvable(Solution)
     case unsolvable
     case couldNotSolve
+    case partialSolution(Solution)
 
     func map<K>(_ transform: (Solution) -> K) -> IterativeSolutionResult<K> {
         switch self {
@@ -133,6 +138,8 @@ public enum IterativeSolutionResult<Solution> {
                 return .unsolvable
             case .couldNotSolve:
                 return .couldNotSolve
+            case .partialSolution(let solution):
+                return .partialSolution(transform(solution))
         }
     }
 }
@@ -152,3 +159,18 @@ public struct Solution<Value> {
 }
 
 extension Solution: Equatable where Value: Equatable {}
+
+private extension Array {
+    func merged<T>() -> AsyncStream<T> where Element == AsyncStream<T> {
+        .init { continuation in
+            Task {
+                for stream in self {
+                    for await item in stream {
+                        continuation.yield(item)
+                    }
+                }
+                continuation.finish()
+            }
+        }
+    }
+}

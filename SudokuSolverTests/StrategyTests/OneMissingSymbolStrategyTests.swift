@@ -2,7 +2,7 @@ import XCTest
 @testable import SudokuSolver
 
 final class OneMissingSymbolStrategyTests: XCTestCase {
-    func test_whenOneIsMissingInRow_thenFindsMove() throws {
+    func test_whenOneIsMissingInRow_thenFindsMove() async throws {
         // Given
         let board = try! SudokuBoard([
             [1, 2, nil, 4],
@@ -15,7 +15,7 @@ final class OneMissingSymbolStrategyTests: XCTestCase {
         let strategy = OneMissingSymbolStrategy(rules: [contentRule, uniquenessRule])
 
         // When
-        let result = strategy.nextMove(on: board)
+        let result = await strategy.nextMove(on: board)
 
         // Then
         let move = try XCTUnwrap(result)
@@ -24,7 +24,7 @@ final class OneMissingSymbolStrategyTests: XCTestCase {
         XCTAssertEqual(move.reason, "3 is the only symbol missing from Row 1")
     }
 
-    func test_whenOneIsMissingInColumn_thenFindsMove() throws {
+    func test_whenOneIsMissingInColumn_thenFindsMove() async throws {
         // Given
         let board = try! SudokuBoard([
             [nil, nil, 1, nil],
@@ -37,7 +37,7 @@ final class OneMissingSymbolStrategyTests: XCTestCase {
         let strategy = OneMissingSymbolStrategy(rules: [contentRule, uniquenessRule])
 
         // When
-        let result = strategy.nextMove(on: board)
+        let result = await strategy.nextMove(on: board)
 
         // Then
         let move = try XCTUnwrap(result)
@@ -46,7 +46,7 @@ final class OneMissingSymbolStrategyTests: XCTestCase {
         XCTAssertEqual(move.reason, "2 is the only symbol missing from Column 3")
     }
 
-    func test_whenOneIsMissingInRegion_thenFindsMove() throws {
+    func test_whenOneIsMissingInRegion_thenFindsMove() async throws {
         // Given
         let board = try! SudokuBoard([
             [nil, nil, 1, 3],
@@ -59,7 +59,7 @@ final class OneMissingSymbolStrategyTests: XCTestCase {
         let strategy = OneMissingSymbolStrategy(rules: [contentRule, uniquenessRule])
 
         // When
-        let result = strategy.nextMove(on: board)
+        let result = await strategy.nextMove(on: board)
 
         // Then
         let move = try XCTUnwrap(result)

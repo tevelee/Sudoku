@@ -7,7 +7,7 @@ final class RegularBoardSolverTests: XCTestCase {
         // TODO: empty board shows all solutions
     }
 
-    func test_whenAttemptingToSolveFullBoard_thenGivesExistingSolution() {
+    func test_whenAttemptingToSolveFullBoard_thenGivesExistingSolution() async {
         // Given
         let board = try! SudokuBoard<Int>([
             [1, 2, 3, 4, 5, 6, 7, 8, 9],
@@ -25,13 +25,13 @@ final class RegularBoardSolverTests: XCTestCase {
         let solver = SudokuSolver(rules: [contentRule, uniquenessRule])
 
         // When
-        let solutions = solver.iterativeSolve(board)
+        let solutions = await solver.iterativeSolve(board)
 
         // Then
         XCTAssertEqual(solutions, .solvable(Solution(moves: [])))
     }
 
-    func test_whenAttemptingToSolveBoardWithOneMissingValue_thenFindsMissingValue() {
+    func test_whenAttemptingToSolveBoardWithOneMissingValue_thenFindsMissingValue() async {
         // Given
         let board = try! SudokuBoard<Int>([
             [1, nil, 3, 4, 5, 6, 7, 8, 9],
@@ -49,7 +49,7 @@ final class RegularBoardSolverTests: XCTestCase {
         let solver = SudokuSolver(rules: [contentRule, uniquenessRule])
 
         // When
-        let solutions = solver.iterativeSolve(board)
+        let solutions = await solver.iterativeSolve(board)
 
         // Then
         XCTAssertEqual(solutions, .solvable(Solution(moves: [
@@ -60,7 +60,7 @@ final class RegularBoardSolverTests: XCTestCase {
         ])))
     }
 
-    func test_whenAttemptingToSolveRealBoard_thenFindsSolution() {
+    func test_whenAttemptingToSolveRealBoard_thenFindsSolution() async {
         // Given
         let board = try! SudokuBoard<Int>([
             [  3,   4,   2,        nil,   8, nil,       nil, nil, nil],
@@ -80,10 +80,12 @@ final class RegularBoardSolverTests: XCTestCase {
         let solver = SudokuSolver(rules: [contentRule, uniquenessRule])
 
         // When
-        let solutions = solver.iterativeSolve(board)
+        let solutions = await solver.iterativeSolve(board)
 
         // Then
-        print(solver.availableMoves(board))
+        for await move in solver.availableMoves(board) {
+            print(move)
+        }
         if case .solvable(let solution) = solutions {
             print(solution)
         }

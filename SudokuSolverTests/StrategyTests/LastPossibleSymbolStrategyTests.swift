@@ -2,7 +2,7 @@ import XCTest
 @testable import SudokuSolver
 
 final class LastPossibleSymbolStrategyTests: XCTestCase {
-    func test_whenOneIsMissing_thenFindsMove() throws {
+    func test_whenOneIsMissing_thenFindsMove() async throws {
         // Given
         let board = try! SudokuBoard([
             [1,    2,  nil, nil, nil, nil],
@@ -17,7 +17,7 @@ final class LastPossibleSymbolStrategyTests: XCTestCase {
         let strategy = LastPossibleSymbolStrategy(rules: [contentRule, uniquenessRule])
 
         // When
-        let result = strategy.nextMove(on: board)
+        let result = await strategy.nextMove(on: board)
 
         // Then
         let move = try XCTUnwrap(result)

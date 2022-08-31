@@ -7,25 +7,28 @@ final class LastPossibleSymbolStrategy<Value: Hashable & CustomStringConvertible
         self.rules = rules
     }
 
-    func nextMove(on board: SudokuBoard<Value>, cache: Cache) -> Move<Value>? {
-        for position in board.positionsOfRowSlices.flatMap(\.items) where board[position] == nil {
-            guard let row = cache.positionsToRows[position]?.compactMap(board.value),
-                  let column = cache.positionsToColumns[position]?.compactMap(board.value),
-                  let region = cache.positionsToRegions[position]?.compactMap(board.value) else {
-                continue
+    func moves(on board: SudokuBoard<Value>, cache: Cache) -> AsyncStream<Move<Value>> {
+        AsyncStream { continuation in
+            for position in board.positionsOfRowSlices.flatMap(\.items) where board[position] == nil {
+                guard let row = cache.positionsToRows[position]?.compactMap(board.value),
+                      let column = cache.positionsToColumns[position]?.compactMap(board.value),
+                      let region = cache.positionsToRegions[position]?.compactMap(board.value) else {
+                    continue
+                }
+                let symbols = Set(row.items + column.items + region.items)
+                if symbols.count == allSymbols.count - 1, let missingValue = allSymbols.subtracting(symbols).first {
+                    let symbolsInRow = row.items.map(\.description).sorted().list()
+                    let symbolsInColumn = column.items.map(\.description).sorted().list()
+                    let symbolsInRegion = region.items.map(\.description).sorted().list()
+                    let move = Move(reason: "\(missingValue) is the only symbol missing at \(row.name), \(column.name)",
+                                    details: "\(row.name) contains \(symbolsInRow); \(column.name) contains \(symbolsInColumn); \(region.name) contains \(symbolsInRegion)",
+                                    value: missingValue,
+                                    position: position)
+                    continuation.yield(move)
+                }
             }
-            let symbols = Set(row.items + column.items + region.items)
-            if symbols.count == allSymbols.count - 1, let missingValue = allSymbols.subtracting(symbols).first {
-                let symbolsInRow = row.items.map(\.description).sorted().list()
-                let symbolsInColumn = column.items.map(\.description).sorted().list()
-                let symbolsInRegion = region.items.map(\.description).sorted().list()
-                return Move(reason: "\(missingValue) is the only symbol missing at \(row.name), \(column.name)",
-                            details: "\(row.name) contains \(symbolsInRow); \(column.name) contains \(symbolsInColumn); \(region.name) contains \(symbolsInRegion)",
-                            value: missingValue,
-                            position: position)
-            }
+            continuation.finish()
         }
-        return nil
     }
 
     private lazy var allSymbols = contentRule().map { Set($0.allowedSymbols) } ?? []

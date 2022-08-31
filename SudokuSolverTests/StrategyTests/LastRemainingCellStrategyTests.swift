@@ -2,7 +2,7 @@ import XCTest
 @testable import SudokuSolver
 
 final class LastRemainingCellStrategyTests: XCTestCase {
-    func test_whenNumberCoversCellsInRegion_thenFindsMissing() throws {
+    func test_whenNumberCoversCellsInRegion_thenFindsMissing() async throws {
         // Given
         let board = try! SudokuBoard([
             [nil, nil, nil, nil],
@@ -15,7 +15,7 @@ final class LastRemainingCellStrategyTests: XCTestCase {
         let strategy = LastRemainingCellStrategy(rules: [contentRule, uniquenessRule])
 
         // When
-        let result = strategy.nextMove(on: board)
+        let result = await strategy.nextMove(on: board)
 
         // Then
         let move = try XCTUnwrap(result)
@@ -25,7 +25,7 @@ final class LastRemainingCellStrategyTests: XCTestCase {
         XCTAssertEqual(move.details, "In Region 1, Row 2 and Column 1 contain 2, it must be at Row 1, Column 2")
     }
 
-    func test_whenNumberCoversCellsInLargerRegion_thenFindsMissing() throws {
+    func test_whenNumberCoversCellsInLargerRegion_thenFindsMissing() async throws {
         // Given
         let board = try! SudokuBoard([
             [nil, nil, nil, 2, nil, nil],
@@ -40,7 +40,7 @@ final class LastRemainingCellStrategyTests: XCTestCase {
         let strategy = LastRemainingCellStrategy(rules: [contentRule, uniquenessRule])
 
         // When
-        let result = strategy.nextMove(on: board)
+        let result = await strategy.nextMove(on: board)
 
         // Then
         let move = try XCTUnwrap(result)

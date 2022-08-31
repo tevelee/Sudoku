@@ -2,16 +2,26 @@ import Foundation
 
 protocol SudokuSolvingStrategy<Value> {
     associatedtype Value: CustomStringConvertible
-    func nextMove(on board: SudokuBoard<Value>, cache: Cache) -> Move<Value>?
+
+    func moves(on board: SudokuBoard<Value>, cache: Cache) -> AsyncStream<Move<Value>>
 }
 
 extension SudokuSolvingStrategy {
-    func nextMove(on board: SudokuBoard<Value>) -> Move<Value>? {
-        nextMove(on: board, cache: Cache(board: board))
+    func nextMove(on board: SudokuBoard<Value>, cache: Cache) async -> Move<Value>? {
+        for try await move in moves(on: board, cache: cache) {
+            return move
+        }
+        return nil
+    }
+
+    func nextMove(on board: SudokuBoard<Value>) async -> Move<Value>? {
+        await nextMove(on: board, cache: Cache(board: board))
     }
 }
 
 struct Cache {
+    // TODO: use dynamic storage
+    // like this https://github.com/tevelee/AsyncHTTP/blob/main/Sources/AsyncHTTP/Model/HTTPRequest.swift#L73
     var positionsToRows: [Position: GridSlice] = [:]
     var positionsToColumns: [Position: GridSlice] = [:]
     var positionsToRegions: [Position: GridSlice] = [:]

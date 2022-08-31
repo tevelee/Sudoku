@@ -22,6 +22,7 @@
 		8F382A3E28BE8DE300048406 /* OneMissingSymbol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F382A3D28BE8DE300048406 /* OneMissingSymbol.swift */; };
 		8F382A4028BE8E0C00048406 /* LastPossibleSymbol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F382A3F28BE8E0C00048406 /* LastPossibleSymbol.swift */; };
 		8F382A4328BE915600048406 /* LastPossibleSymbolStrategyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F382A4228BE915500048406 /* LastPossibleSymbolStrategyTests.swift */; };
+		8F482F6C28BF99B00016F50D /* AsyncAlgorithms in Frameworks */ = {isa = PBXBuildFile; productRef = 8F482F6B28BF99B00016F50D /* AsyncAlgorithms */; };
 		8FAED55A28B29C02005C0797 /* SudokuApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FAED55928B29C02005C0797 /* SudokuApp.swift */; };
 		8FAED55C28B29C02005C0797 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FAED55B28B29C02005C0797 /* ContentView.swift */; };
 		8FAED55E28B29C05005C0797 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8FAED55D28B29C05005C0797 /* Assets.xcassets */; };
@@ -156,6 +157,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				8F1A1EF028B2B1670038B383 /* Algorithms in Frameworks */,
+				8F482F6C28BF99B00016F50D /* AsyncAlgorithms in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -376,6 +378,7 @@
 			name = SudokuSolver;
 			packageProductDependencies = (
 				8F1A1EEF28B2B1670038B383 /* Algorithms */,
+				8F482F6B28BF99B00016F50D /* AsyncAlgorithms */,
 			);
 			productName = SudokuSolver;
 			productReference = 8FAED58B28B29E7A005C0797 /* SudokuSolver.framework */;
@@ -440,6 +443,7 @@
 			mainGroup = 8FAED54D28B29C02005C0797;
 			packageReferences = (
 				8F1A1EEB28B2B0CC0038B383 /* XCRemoteSwiftPackageReference "swift-algorithms" */,
+				8F482F6A28BF99B00016F50D /* XCRemoteSwiftPackageReference "swift-async-algorithms" */,
 			);
 			productRefGroup = 8FAED55728B29C02005C0797 /* Products */;
 			projectDirPath = "";
@@ -1046,6 +1050,14 @@
 				minimumVersion = 1.0.0;
 			};
 		};
+		8F482F6A28BF99B00016F50D /* XCRemoteSwiftPackageReference "swift-async-algorithms" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apple/swift-async-algorithms";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.0.3;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -1053,6 +1065,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 8F1A1EEB28B2B0CC0038B383 /* XCRemoteSwiftPackageReference "swift-algorithms" */;
 			productName = Algorithms;
+		};
+		8F482F6B28BF99B00016F50D /* AsyncAlgorithms */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 8F482F6A28BF99B00016F50D /* XCRemoteSwiftPackageReference "swift-async-algorithms" */;
+			productName = AsyncAlgorithms;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
