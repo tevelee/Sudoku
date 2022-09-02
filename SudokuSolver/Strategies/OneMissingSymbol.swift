@@ -8,7 +8,7 @@ final class OneMissingSymbolStrategy<Value: Hashable & CustomStringConvertible>:
         self.rules = rules
     }
 
-    func moves(on board: SudokuBoard<Value>, cache: Cache) -> AsyncStream<Move<Value>> {
+    func moves(on board: SudokuBoard<Value>, cache: inout Cache<Value>) -> AsyncStream<Move<Value>> {
         let rows = moves(for: board.rows)
         let columns = moves(for: board.columns)
         let regions = moves(for: board.regions)

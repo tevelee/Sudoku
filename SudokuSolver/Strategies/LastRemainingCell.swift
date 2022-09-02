@@ -7,7 +7,7 @@ final class LastRemainingCellStrategy<Value: Hashable & CustomStringConvertible>
         self.rules = rules
     }
 
-    func moves(on board: SudokuBoard<Value>, cache: Cache) -> AsyncStream<Move<Value>> {
+    func moves(on board: SudokuBoard<Value>, cache: inout Cache<Value>) -> AsyncStream<Move<Value>> {
         AsyncStream { continuation in
             for region in board.positionsOfRegionSlices {
                 var positionsToRowValues: [Position: Set<Value>] = [:]

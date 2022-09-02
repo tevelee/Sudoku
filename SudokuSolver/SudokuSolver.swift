@@ -5,51 +5,51 @@ public final class SudokuSolver<Value: Hashable & CustomStringConvertible> {
     private let rules: [any SudokuRule<Value>]
     private let strategies: [any SudokuSolvingStrategy<Value>]
 
-    public init(rules: [any SudokuRule<Value>] = []) {
+    public init(rules: [any SudokuRule<Value>], strategies: [any SudokuSolvingStrategy<Value>]) {
         self.rules = rules
-        strategies = [
+        self.strategies = strategies
+    }
+
+    public init(rules: [any SudokuRule<Value>] = [],
+                additionalStrategies strategies: [any SudokuSolvingStrategy<Value>] = []) {
+        self.rules = rules
+        self.strategies = [
             OneMissingSymbolStrategy<Value>(rules: rules),
             LastRemainingCellStrategy<Value>(rules: rules),
             LastPossibleSymbolStrategy<Value>(rules: rules)
-        ]
+        ] + strategies
     }
 
     public func iterativeSolve(_ board: SudokuBoard<Value>) async -> IterativeSolutionResult<Solution<Value>> {
-        await solve(board, moves: [], findFirstSolutionOnly: true).map { $0[0] }
+        await solve(board, moves: []).map { $0[0] }
     }
 
     public func availableMoves(_ board: SudokuBoard<Value>) -> AsyncStream<Move<Value>> {
-        let cache = Cache(board: board)
-        return strategies.map { $0.moves(on: board, cache: cache) }.merged()
+        var cache = Cache(board: board)
+        return strategies.map { $0.moves(on: board, cache: &cache) }.merged()
     }
 
-    private func solve(_ board: SudokuBoard<Value>,
-                       moves: [Move<Value>],
-                       findFirstSolutionOnly: Bool = true) async -> IterativeSolutionResult<[Solution<Value>]> {
+    private func solve(_ board: SudokuBoard<Value>, moves: [Move<Value>]) async -> IterativeSolutionResult<[Solution<Value>]> {
         guard board.isValid(against: rules) else {
             return .unsolvable
         }
         if board.isCompleted {
             return .solvable([Solution(moves: moves)])
         }
-        var result: [Solution<Value>] = []
-        let cache = Cache(board: board)
+        var cache = Cache(board: board)
         for strategy in strategies {
-            if let move = await strategy.nextMove(on: board, cache: cache) {
+            if let move = await strategy.nextMove(on: board, cache: &cache) {
                 var newBoard = board
                 newBoard[move.position] = move.value
                 if case .solvable(let solutions) = await solve(newBoard, moves: moves + [move]) {
-                    result.append(contentsOf: solutions)
-                    if findFirstSolutionOnly {
-                        return .solvable(result)
-                    }
+                    return .solvable(solutions)
                 }
             }
         }
-        if result.isEmpty {
+        if moves.isEmpty {
             return .couldNotSolve
         } else {
-            return .partialSolution(result)
+            return .partialSolution([Solution(moves: moves)])
         }
     }
 }

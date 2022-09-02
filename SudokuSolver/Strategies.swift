@@ -1,47 +1,106 @@
 import Foundation
 
-protocol SudokuSolvingStrategy<Value> {
+public protocol SudokuSolvingStrategy<Value> {
     associatedtype Value: CustomStringConvertible
 
-    func moves(on board: SudokuBoard<Value>, cache: Cache) -> AsyncStream<Move<Value>>
+    func moves(on board: SudokuBoard<Value>, cache: inout Cache<Value>) -> AsyncStream<Move<Value>>
 }
 
-extension SudokuSolvingStrategy {
-    func nextMove(on board: SudokuBoard<Value>, cache: Cache) async -> Move<Value>? {
-        for try await move in moves(on: board, cache: cache) {
-            return move
-        }
-        return nil
+public extension SudokuSolvingStrategy {
+    func nextMove(on board: SudokuBoard<Value>, cache: inout Cache<Value>) async -> Move<Value>? {
+        await moves(on: board, cache: &cache).first
     }
 
     func nextMove(on board: SudokuBoard<Value>) async -> Move<Value>? {
-        await nextMove(on: board, cache: Cache(board: board))
+        var cache = Cache(board: board)
+        return await nextMove(on: board, cache: &cache)
     }
 }
 
-struct Cache {
-    // TODO: use dynamic storage
-    // like this https://github.com/tevelee/AsyncHTTP/blob/main/Sources/AsyncHTTP/Model/HTTPRequest.swift#L73
-    var positionsToRows: [Position: GridSlice] = [:]
-    var positionsToColumns: [Position: GridSlice] = [:]
-    var positionsToRegions: [Position: GridSlice] = [:]
+public protocol SudokuBoardCache {
+    associatedtype Value: Hashable
 
-    init<Value>(board: SudokuBoard<Value>) {
+    static func compute<T>(_ board: SudokuBoard<T>) -> Value
+}
+
+public extension Cache {
+    var positionsToRows: [Position: GridSlice] {
+        mutating get {
+            self[PositionsInRowsCache.self]
+        }
+    }
+    var positionsToColumns: [Position: GridSlice] {
+        mutating get {
+            self[PositionsInColumnsCache.self]
+        }
+    }
+    var positionsToRegions: [Position: GridSlice] {
+        mutating get {
+            self[PositionsInRegionsCache.self]
+        }
+    }
+}
+
+struct PositionsInRowsCache: SudokuBoardCache {
+    typealias Value = [Position: GridSlice]
+
+    static func compute<T>(_ board: SudokuBoard<T>) -> [Position: GridSlice] {
+        var result: [Position: GridSlice] = [:]
         for slice in board.positionsOfRowSlices {
             for position in slice.items {
-                positionsToRows[position] = slice
+                result[position] = slice
             }
         }
+        return result
+    }
+}
+
+struct PositionsInColumnsCache: SudokuBoardCache {
+    typealias Value = [Position: GridSlice]
+
+    static func compute<T>(_ board: SudokuBoard<T>) -> [Position: GridSlice] {
+        var result: [Position: GridSlice] = [:]
         for slice in board.positionsOfColumnSlices {
             for position in slice.items {
-                positionsToColumns[position] = slice
+                result[position] = slice
             }
         }
+        return result
+    }
+}
+
+struct PositionsInRegionsCache: SudokuBoardCache {
+    typealias Value = [Position: GridSlice]
+
+    static func compute<T>(_ board: SudokuBoard<T>) -> [Position: GridSlice] {
+        var result: [Position: GridSlice] = [:]
         for slice in board.positionsOfRegionSlices {
             for position in slice.items {
-                positionsToRegions[position] = slice
+                result[position] = slice
             }
         }
+        return result
+    }
+}
+
+public struct Cache<Value> {
+    private let board: SudokuBoard<Value>
+    private var objects: [ObjectIdentifier: AnyHashable] = [:]
+
+    subscript<O: SudokuBoardCache>(object: O.Type) -> O.Value {
+        mutating get {
+            let id = ObjectIdentifier(object)
+            if let value = objects[id]?.base as? O.Value {
+                return value
+            }
+            let value = O.compute(board)
+            objects[id] = AnyHashable(value)
+            return value
+        }
+    }
+
+    init(board: SudokuBoard<Value>) {
+        self.board = board
     }
 }
 
@@ -57,5 +116,18 @@ extension Move: Equatable where Value: Equatable {}
 extension Array where Element: CustomStringConvertible {
     func list() -> String {
         ListFormatter().string(from: self) ?? map(\.description).joined(separator: ", ")
+    }
+}
+
+extension AsyncSequence {
+    var first: Element? {
+        get async {
+            do {
+                for try await item in self {
+                    return item
+                }
+            } catch {}
+            return nil
+        }
     }
 }
