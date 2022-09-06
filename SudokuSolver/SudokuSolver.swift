@@ -42,7 +42,9 @@ public final class SudokuSolver<Value: Hashable & CustomStringConvertible> {
                        moves: [Move<Value>],
                        layoutCache: inout Cache<SlicedGrid>,
                        valueCache: inout Cache<SudokuBoard<Value>>) async -> IterativeSolutionResult<[Solution<Value>]> {
-        guard board.isValid(against: rules) else {
+        guard valueCache.rows().isValid(against: rules),
+              valueCache.columns().isValid(against: rules),
+              valueCache.regions().isValid(against: rules) else {
             return .unsolvable
         }
         if board.isCompleted {
@@ -70,15 +72,6 @@ extension SudokuBoard {
     var isCompleted: Bool {
         values.allSatisfy { $0 != nil }
     }
-
-    func isValid(against rules: [any SudokuRule<Value>]) -> Bool {
-        guard rows.isValid(against: rules),
-              columns.isValid(against: rules),
-              regions.isValid(against: rules) else {
-            return false
-        }
-        return true
-    }
 }
 
 @available(macOS 13.0.0, *)
@@ -91,9 +84,10 @@ extension SudokuSolver where Value: Equatable {
     }
 
     private func quickSolve(_ board: SudokuBoard<Value>, contentRule: ContentRule<Value>) -> QuickSolutionResult<Value> {
-        guard board.rows.isValid(against: rules),
-              board.columns.isValid(against: rules),
-              board.regions.isValid(against: rules) else {
+        var cache = Cache(board)
+        guard cache.rows().isValid(against: rules),
+              cache.columns().isValid(against: rules),
+              cache.regions().isValid(against: rules) else {
             return .unsolvable
         }
 
@@ -127,11 +121,13 @@ extension SudokuSolver where Value: Equatable {
     }
 }
 
-private extension Sequence {
+private extension Array {
     @available(macOS 13.0.0, *)
-    func isValid<Wrapped>(against rules: [any SudokuRule<Wrapped>]) -> Bool where Element == Slice<(position: Position, value: Wrapped?)> {
+    func isValid<Wrapped>(against rules: [any SudokuRule<Wrapped>]) -> Bool where Element == BoardSlice<Wrapped?> {
         allSatisfy { slice in
-            rules.allSatisfy { $0.isValid(slice) }
+            rules.allSatisfy { rule in
+                rule.isValid(slice)
+            }
         }
     }
 }

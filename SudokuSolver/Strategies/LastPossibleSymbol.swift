@@ -11,7 +11,7 @@ final class LastPossibleSymbolStrategy<Value: Hashable & CustomStringConvertible
                layoutCache: inout Cache<SlicedGrid>,
                valueCache: inout Cache<SudokuBoard<Value>>) -> AsyncStream<Move<Value>> {
         AsyncStream { continuation in
-            for position in board.positionsOfRowSlices.flatMap(\.items) where board[position] == nil {
+            for position in layoutCache.rows().flatMap(\.items) where board[position] == nil {
                 guard let row = layoutCache.row(for: position)?.compactMap(board.value),
                       let column = layoutCache.column(for: position)?.compactMap(board.value),
                       let region = layoutCache.region(for: position)?.compactMap(board.value) else {

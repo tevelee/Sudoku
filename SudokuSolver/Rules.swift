@@ -3,7 +3,7 @@ import Foundation
 public protocol SudokuRule<Value> {
     associatedtype Value
 
-    func isValid(_ slice: BoardSlice<Value>) -> Bool
+    func isValid(_ slice: BoardSlice<Value?>) -> Bool
 }
 
 // TODO: check if largest side of board has equal number of elements as allowedSymbols
@@ -16,14 +16,14 @@ public struct ContentRule<Value> {
 }
 
 extension ContentRule: SudokuRule where Value: Equatable {
-    public func isValid(_ slice: BoardSlice<Value>) -> Bool {
+    public func isValid(_ slice: BoardSlice<Value?>) -> Bool {
         slice.items.allSatisfy { item in
             item.value.map(allowedSymbols.contains) ?? true
         }
     }
 }
 
-public struct UniqueSymbolsRule<Value> {
+public struct UniqueSymbolsRule<Value: Hashable> {
     public let slices: [Slice<Value>]
 
     public init(slices: [Slice<Value>]) {
@@ -31,22 +31,23 @@ public struct UniqueSymbolsRule<Value> {
     }
 
     public init(rowsAndColumnsAndRegions board: SudokuBoard<Value>) {
+        var cache = Cache(board)
         self.init(slices: [
-            Array(board.rows.onlyCompletedValues()),
-            Array(board.columns.onlyCompletedValues()),
-            Array(board.regions.onlyCompletedValues())
+            cache.rows().onlyCompletedValues(),
+            cache.columns().onlyCompletedValues(),
+            cache.regions().onlyCompletedValues()
       ].flatMap { $0 })
     }
 }
 
-private extension Sequence {
-    func onlyCompletedValues<Wrapped>() -> some Sequence<Slice<Wrapped>> where Element == Slice<(position: Position, value: Wrapped?)> {
+private extension Array {
+    func onlyCompletedValues<Wrapped>() -> [Slice<Wrapped>] where Element == BoardSlice<Wrapped?> {
         map { $0.compactMap(\.value) }
     }
 }
 
 extension UniqueSymbolsRule: SudokuRule where Value: Hashable {
-    public func isValid(_ slice: BoardSlice<Value>) -> Bool {
+    public func isValid(_ slice: BoardSlice<Value?>) -> Bool {
         var map: [Value: Int] = [:]
         for item in slice.items {
             if let value = item.value {

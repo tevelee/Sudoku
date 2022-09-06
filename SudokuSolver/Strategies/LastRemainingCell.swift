@@ -11,14 +11,14 @@ final class LastRemainingCellStrategy<Value: Hashable & CustomStringConvertible>
     func moves(on board: SudokuBoard<Value>,
                layoutCache: inout Cache<SlicedGrid>,
                valueCache: inout Cache<SudokuBoard<Value>>) -> AsyncStream<Move<Value>> {
-        let regions = moves(on: board, primary: board.positionsOfRegionSlices, other1: layoutCache.positionsToRows, other2: layoutCache.positionsToColumns)
-        let rows = moves(on: board, primary: board.positionsOfRowSlices, other1: layoutCache.positionsToRegions, other2: layoutCache.positionsToColumns)
-        let columns = moves(on: board, primary: board.positionsOfColumnSlices, other1: layoutCache.positionsToRows, other2: layoutCache.positionsToRegions)
+        let regions = moves(on: board, primary: layoutCache.regions(), other1: layoutCache.positionsToRows, other2: layoutCache.positionsToColumns)
+        let rows = moves(on: board, primary: layoutCache.rows(), other1: layoutCache.positionsToRegions, other2: layoutCache.positionsToColumns)
+        let columns = moves(on: board, primary: layoutCache.columns(), other1: layoutCache.positionsToRows, other2: layoutCache.positionsToRegions)
         return chain(regions, rows, columns).stream()
     }
 
     func moves(on board: SudokuBoard<Value>,
-               primary: AnySequence<GridSlice>,
+               primary: [GridSlice],
                other1: [Position: GridSlice],
                other2: [Position: GridSlice]) -> AsyncStream<Move<Value>> {
         AsyncStream { continuation in

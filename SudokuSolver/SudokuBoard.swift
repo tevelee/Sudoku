@@ -6,30 +6,11 @@ import Algorithms
 // - Board scanner (reader) from string/image input
 // - UI
 
-public typealias BoardSlice<Value> = Slice<(position: Position, value: Value?)>
+public typealias BoardSlice<Value> = Slice<Field<Value>>
 
 public struct SudokuBoard<Value> {
+    // TODO: store non optionals, because AvailableValue.possible can replace nil
     private var rawData: [[Value?]]
-
-    let positionsOfRowSlices: AnySequence<GridSlice>
-    let positionsOfColumnSlices: AnySequence<GridSlice>
-    let positionsOfRegionSlices: AnySequence<GridSlice>
-
-    public var rows: some Sequence<BoardSlice<Value>> {
-        values(from: positionsOfRowSlices)
-    }
-    public var columns: some Sequence<BoardSlice<Value>> {
-        values(from: positionsOfColumnSlices)
-    }
-    public var regions: some Sequence<BoardSlice<Value>> {
-        values(from: positionsOfRegionSlices)
-    }
-
-    private func values(from division: some Sequence<GridSlice>) -> some Sequence<BoardSlice<Value>> {
-        division.lazy.map {
-            $0.map { ($0, self[$0]) }
-        }
-    }
 
     let slicedGrid: SlicedGrid
 
@@ -48,14 +29,10 @@ public struct SudokuBoard<Value> {
         let width = rows[0].count
         let height = rows.count
         let grid = Grid(width: width, height: height)
-        self.positionsOfRowSlices = AnySequence(Rows(grid: grid))
-        self.positionsOfColumnSlices = AnySequence(Columns(grid: grid))
-
         let slices = try slicing.slices(for: grid)
         guard slices.flatMap(\.items).allSatisfy(grid.contains) else {
             throw SlicingError.positionOutOfBounds
         }
-        self.positionsOfRegionSlices = AnySequence(slices)
         self.slicedGrid = SlicedGrid(grid: grid, slices: slices)
     }
 
@@ -116,7 +93,7 @@ extension SudokuBoard: Hashable where Value: Hashable {
     }
 }
 
-extension SudokuBoard: CustomStringConvertible where Value: CustomStringConvertible {
+extension SudokuBoard: CustomStringConvertible where Value: CustomStringConvertible, Value: Hashable {
     public var description: String {
         "\n\(SudokuBoardPrinter().print(self))\n"
     }

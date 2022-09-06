@@ -86,6 +86,56 @@ struct PositionsInRegionsCache: CachedComputation {
     }
 }
 
+public struct Field<T> {
+    let position: Position
+    let value: T
+}
+
+extension Field: Equatable where T: Equatable {}
+extension Field: Hashable where T: Hashable {}
+
+struct RowFieldsCache<T: Hashable>: CachedComputation {
+    static func compute(_ board: SudokuBoard<T>) -> [BoardSlice<T?>] {
+        RowsCache.compute(board.slicedGrid).map { slice in
+            slice.map { Field(position: $0, value: board[$0]) }
+        }
+    }
+}
+
+struct ColumnFieldsCache<T: Hashable>: CachedComputation {
+    static func compute(_ board: SudokuBoard<T>) -> [BoardSlice<T?>] {
+        ColumnsCache.compute(board.slicedGrid).map { slice in
+            slice.map { Field(position: $0, value: board[$0]) }
+        }
+    }
+}
+
+struct RegionFieldsCache<T: Hashable>: CachedComputation {
+    static func compute(_ board: SudokuBoard<T>) -> [BoardSlice<T?>] {
+        RegionsCache.compute(board.slicedGrid).map { slice in
+            slice.map { Field(position: $0, value: board[$0]) }
+        }
+    }
+}
+
+struct RowsCache: CachedComputation {
+    static func compute(_ slicedGrid: SlicedGrid) -> [GridSlice] {
+        Array(Rows(grid: slicedGrid.grid))
+    }
+}
+
+struct ColumnsCache: CachedComputation {
+    static func compute(_ slicedGrid: SlicedGrid) -> [GridSlice] {
+        Array(Columns(grid: slicedGrid.grid))
+    }
+}
+
+struct RegionsCache: CachedComputation {
+    static func compute(_ slicedGrid: SlicedGrid) -> [GridSlice] {
+        Array(slicedGrid.slices)
+    }
+}
+
 public struct Cache<Subject> {
     private let subject: Subject
     private var objects: [ObjectIdentifier: AnyHashable] = [:]
@@ -134,6 +184,35 @@ extension Cache where Subject == SlicedGrid {
     public mutating func region(for position: Position) -> GridSlice? {
         positionsToRegions[position]
     }
+}
+
+extension Cache where Subject == SlicedGrid {
+    mutating func rows() -> [GridSlice] {
+        self[RowsCache.self]
+    }
+    mutating func columns() -> [GridSlice] {
+        self[ColumnsCache.self]
+    }
+    mutating func regions() -> [GridSlice] {
+        self[RegionsCache.self]
+    }
+}
+
+extension Cache {
+    mutating func rows<Value: Hashable>() -> [BoardSlice<Value?>] where Subject == SudokuBoard<Value> {
+        self[RowFieldsCache<Value>.self]
+    }
+    mutating func columns<Value: Hashable>() -> [BoardSlice<Value?>] where Subject == SudokuBoard<Value> {
+        self[ColumnFieldsCache<Value>.self]
+    }
+    mutating func regions<Value: Hashable>() -> [BoardSlice<Value?>] where Subject == SudokuBoard<Value> {
+        self[RegionFieldsCache<Value>.self]
+    }
+}
+
+enum AvailableValue<Value: Hashable> {
+    case fix(Value)
+    case possible(Set<Value>)
 }
 
 public struct Move<Value> {

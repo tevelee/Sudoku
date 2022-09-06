@@ -11,13 +11,13 @@ final class OneMissingSymbolStrategy<Value: Hashable & CustomStringConvertible>:
     func moves(on board: SudokuBoard<Value>,
                layoutCache: inout Cache<SlicedGrid>,
                valueCache: inout Cache<SudokuBoard<Value>>) -> AsyncStream<Move<Value>> {
-        let rows = moves(for: board.rows)
-        let columns = moves(for: board.columns)
-        let regions = moves(for: board.regions)
+        let rows = moves(for: valueCache.rows())
+        let columns = moves(for: valueCache.columns())
+        let regions = moves(for: valueCache.regions())
         return chain(rows, columns, regions).stream()
     }
 
-    private func moves(for slices: some Sequence<BoardSlice<Value>>) -> AsyncStream<Move<Value>> {
+    private func moves(for slices: some Sequence<BoardSlice<Value?>>) -> AsyncStream<Move<Value>> {
         AsyncStream { continuation in
             for slice in slices {
                 let items = Set(slice.items.compactMap(\.value))

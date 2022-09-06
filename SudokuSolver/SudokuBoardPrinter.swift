@@ -181,15 +181,17 @@ public final class SudokuBoardPrinter {
 
     private let newLine = "\n"
 
-    func print<T: CustomStringConvertible>(_ board: SudokuBoard<T>) -> String {
+    func print<T: Hashable & CustomStringConvertible>(_ board: SudokuBoard<T>) -> String {
         var result: String = ""
-        if Array(board.positionsOfRegionSlices).isEmpty {
-            for row in board.rows {
+        var layoutCache = Cache(board.slicedGrid)
+        var valueCache = Cache(board)
+        if layoutCache.rows().isEmpty {
+            for row in valueCache.rows() {
                 Swift.print(row.items.map { render(.content($0.value)) }.joined(separator: render(.spacing)), to: &result)
             }
         } else {
             var regions: [Position: String] = [:]
-            for slice in board.positionsOfRegionSlices {
+            for slice in layoutCache.regions() {
                 for item in slice.items {
                     regions[item] = slice.name
                 }
