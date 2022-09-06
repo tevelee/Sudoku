@@ -23,7 +23,8 @@ final class LastPossibleSymbolStrategyTests: XCTestCase {
         let move = try XCTUnwrap(result)
         XCTAssertEqual(move.value, 5)
         XCTAssertEqual(move.position, Position(row: 1, column: 1))
-        XCTAssertEqual(move.reason, "5 is the only symbol missing at Row 2, Column 2")
-        XCTAssertEqual(move.details, "Row 2 contains 3; Column 2 contains 2, 4, and 6; Region 1 contains 1 and 2")
+        let reason = move.reasons.first
+        XCTAssertEqual(reason?.level1, "5 is the only symbol missing at Row 2, Column 2")
+        XCTAssertEqual(reason?.level2, "Row 2 contains 3; Column 2 contains 2, 4, and 6; Region 1 contains 1 and 2")
     }
 }

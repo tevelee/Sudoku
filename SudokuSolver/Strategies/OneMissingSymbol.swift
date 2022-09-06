@@ -8,7 +8,9 @@ final class OneMissingSymbolStrategy<Value: Hashable & CustomStringConvertible>:
         self.rules = rules
     }
 
-    func moves(on board: SudokuBoard<Value>, cache: inout Cache<Value>) -> AsyncStream<Move<Value>> {
+    func moves(on board: SudokuBoard<Value>,
+               layoutCache: inout Cache<SlicedGrid>,
+               valueCache: inout Cache<SudokuBoard<Value>>) -> AsyncStream<Move<Value>> {
         let rows = moves(for: board.rows)
         let columns = moves(for: board.columns)
         let regions = moves(for: board.regions)
@@ -47,20 +49,5 @@ final class OneMissingSymbolStrategy<Value: Hashable & CustomStringConvertible>:
 
     private func isContentRule(_ value: some SudokuRule<Value>) -> ContentRule<Value>? {
         value as? ContentRule<Value>
-    }
-}
-
-private extension AsyncSequence {
-    func stream() -> AsyncStream<Element> {
-        .init { continuation in
-            Task {
-                do {
-                    for try await item in self {
-                        continuation.yield(item)
-                    }
-                } catch {}
-                continuation.finish()
-            }
-        }
     }
 }

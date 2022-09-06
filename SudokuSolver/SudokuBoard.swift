@@ -31,8 +31,10 @@ public struct SudokuBoard<Value> {
         }
     }
 
-    public let width: Int
-    public let height: Int
+    let slicedGrid: SlicedGrid
+
+    public var width: Int { slicedGrid.grid.size.width }
+    public var height: Int { slicedGrid.grid.size.height }
 
     public var values: some Sequence<Value?> {
         rawData.lazy.flatMap { $0.lazy }
@@ -43,8 +45,8 @@ public struct SudokuBoard<Value> {
             throw IncorrectSizeError.mustHavePositiveSize
         }
         self.rawData = rows
-        self.height = rows.count
-        self.width = rows[0].count
+        let width = rows[0].count
+        let height = rows.count
         let grid = Grid(width: width, height: height)
         self.positionsOfRowSlices = AnySequence(Rows(grid: grid))
         self.positionsOfColumnSlices = AnySequence(Columns(grid: grid))
@@ -54,6 +56,7 @@ public struct SudokuBoard<Value> {
             throw SlicingError.positionOutOfBounds
         }
         self.positionsOfRegionSlices = AnySequence(slices)
+        self.slicedGrid = SlicedGrid(grid: grid, slices: slices)
     }
 
     public init(partiallyComplete: [[Value?]] = [],

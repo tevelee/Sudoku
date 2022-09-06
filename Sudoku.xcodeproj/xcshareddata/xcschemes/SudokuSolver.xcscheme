@@ -41,6 +41,9 @@
             </BuildableReference>
             <SkippedTests>
                <Test
+                  Identifier = "EliminatePairsStrategyTests">
+               </Test>
+               <Test
                   Identifier = "RegularBoardSolverTests/test_whenAttemptingToQuickSolveBoard_thenProvidesSolution()">
                </Test>
             </SkippedTests>

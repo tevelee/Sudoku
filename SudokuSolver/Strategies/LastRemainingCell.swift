@@ -1,4 +1,5 @@
 import Foundation
+import AsyncAlgorithms
 
 final class LastRemainingCellStrategy<Value: Hashable & CustomStringConvertible>: SudokuSolvingStrategy {
     private let rules: [any SudokuRule<Value>]
@@ -7,14 +8,26 @@ final class LastRemainingCellStrategy<Value: Hashable & CustomStringConvertible>
         self.rules = rules
     }
 
-    func moves(on board: SudokuBoard<Value>, cache: inout Cache<Value>) -> AsyncStream<Move<Value>> {
+    func moves(on board: SudokuBoard<Value>,
+               layoutCache: inout Cache<SlicedGrid>,
+               valueCache: inout Cache<SudokuBoard<Value>>) -> AsyncStream<Move<Value>> {
+        let regions = moves(on: board, primary: board.positionsOfRegionSlices, other1: layoutCache.positionsToRows, other2: layoutCache.positionsToColumns)
+        let rows = moves(on: board, primary: board.positionsOfRowSlices, other1: layoutCache.positionsToRegions, other2: layoutCache.positionsToColumns)
+        let columns = moves(on: board, primary: board.positionsOfColumnSlices, other1: layoutCache.positionsToRows, other2: layoutCache.positionsToRegions)
+        return chain(regions, rows, columns).stream()
+    }
+
+    func moves(on board: SudokuBoard<Value>,
+               primary: AnySequence<GridSlice>,
+               other1: [Position: GridSlice],
+               other2: [Position: GridSlice]) -> AsyncStream<Move<Value>> {
         AsyncStream { continuation in
-            for region in board.positionsOfRegionSlices {
+            for region in primary {
                 var positionsToRowValues: [Position: Set<Value>] = [:]
                 var positionsToColumnValues: [Position: Set<Value>] = [:]
                 for position in region.items {
-                    guard let row = cache.positionsToRows[position],
-                          let column = cache.positionsToColumns[position] else {
+                    guard let row = other1[position],
+                          let column = other2[position] else {
                         continue
                     }
                     positionsToRowValues[position, default: []].formUnion(row.items.compactMap(board.value))
@@ -28,10 +41,10 @@ final class LastRemainingCellStrategy<Value: Hashable & CustomStringConvertible>
                     let positionsInColumnsCoveredByValue = Set(positionsToColumnValues.filter { $0.value.contains(value) }.map(\.key))
                     let positionsCoveredByValue = positionsInRowsCoveredByValue.union(positionsInColumnsCoveredByValue)
                     if positionsCoveredByValue.count == allPositions.count - 1, let missingPosition = allPositions.subtracting(positionsCoveredByValue).first,
-                       let row = cache.positionsToRows[missingPosition],
-                       let column = cache.positionsToColumns[missingPosition] {
-                        let rowsCovered = Set(positionsInRowsCoveredByValue.compactMap { cache.positionsToRows[$0]?.name }).sorted()
-                        let columnsCovered = Set(positionsInColumnsCoveredByValue.compactMap { cache.positionsToColumns[$0]?.name }).sorted()
+                       let row = other1[missingPosition],
+                       let column = other2[missingPosition] {
+                        let rowsCovered = Set(positionsInRowsCoveredByValue.compactMap { other1[$0]?.name }).sorted()
+                        let columnsCovered = Set(positionsInColumnsCoveredByValue.compactMap { other2[$0]?.name }).sorted()
                         let slicesCovered = (rowsCovered + columnsCovered).list()
                         let move = Move(reason: "Symbol \(value) covers all fields in \(region.name) except \(row.name), \(column.name)",
                                         details: "In \(region.name), \(slicesCovered) contain \(value), it must be at \(row.name), \(column.name)",

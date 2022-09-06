@@ -53,6 +53,21 @@ public struct Grid: Hashable {
     }
 }
 
+public struct SlicedGrid {
+    public let grid: Grid
+    public let slices: [GridSlice]
+
+    init(grid: Grid, slices: [GridSlice]) {
+        self.grid = grid
+        self.slices = slices
+    }
+
+    public init(grid: Grid, slicing: SlicingStrategy) throws {
+        self.grid = grid
+        self.slices = try slicing.slices(for: grid)
+    }
+}
+
 struct Rows: Sequence {
     let grid: Grid
 

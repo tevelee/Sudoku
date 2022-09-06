@@ -20,32 +20,44 @@ public final class SudokuSolver<Value: Hashable & CustomStringConvertible> {
         ] + strategies
     }
 
-    public func iterativeSolve(_ board: SudokuBoard<Value>) async -> IterativeSolutionResult<Solution<Value>> {
-        await solve(board, moves: []).map { $0[0] }
-    }
-
     public func availableMoves(_ board: SudokuBoard<Value>) -> AsyncStream<Move<Value>> {
-        var cache = Cache(board: board)
-        return strategies.map { $0.moves(on: board, cache: &cache) }.merged()
+        var layoutCache = Cache(board.slicedGrid)
+        var valueCache = Cache(board)
+        return strategies.map { $0.moves(on: board, layoutCache: &layoutCache, valueCache: &valueCache) }.merged()
     }
 
-    private func solve(_ board: SudokuBoard<Value>, moves: [Move<Value>]) async -> IterativeSolutionResult<[Solution<Value>]> {
+    public func iterativeSolve(_ board: SudokuBoard<Value>) async -> IterativeSolutionResult<Solution<Value>> {
+        var layoutCache = Cache(board.slicedGrid)
+        return await solve(board, moves: [], layoutCache: &layoutCache).map { $0[0] }
+    }
+
+    private func solve(_ board: SudokuBoard<Value>,
+                       moves: [Move<Value>],
+                       layoutCache: inout Cache<SlicedGrid>) async -> IterativeSolutionResult<[Solution<Value>]> {
+        var cache = Cache(board)
+        return await solve(board, moves: moves, layoutCache: &layoutCache, valueCache: &cache)
+    }
+
+    private func solve(_ board: SudokuBoard<Value>,
+                       moves: [Move<Value>],
+                       layoutCache: inout Cache<SlicedGrid>,
+                       valueCache: inout Cache<SudokuBoard<Value>>) async -> IterativeSolutionResult<[Solution<Value>]> {
         guard board.isValid(against: rules) else {
             return .unsolvable
         }
         if board.isCompleted {
             return .solvable([Solution(moves: moves)])
         }
-        var cache = Cache(board: board)
         for strategy in strategies {
-            if let move = await strategy.nextMove(on: board, cache: &cache) {
+            if let move = await strategy.nextMove(on: board, layoutCache: &layoutCache, valueCache: &valueCache) {
                 var newBoard = board
                 newBoard[move.position] = move.value
-                if case .solvable(let solutions) = await solve(newBoard, moves: moves + [move]) {
+                if case .solvable(let solutions) = await solve(newBoard, moves: moves + [move], layoutCache: &layoutCache) {
                     return .solvable(solutions)
                 }
             }
         }
+
         if moves.isEmpty {
             return .couldNotSolve
         } else {

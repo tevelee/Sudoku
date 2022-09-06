@@ -7,12 +7,14 @@ final class LastPossibleSymbolStrategy<Value: Hashable & CustomStringConvertible
         self.rules = rules
     }
 
-    func moves(on board: SudokuBoard<Value>, cache: inout Cache<Value>) -> AsyncStream<Move<Value>> {
+    func moves(on board: SudokuBoard<Value>,
+               layoutCache: inout Cache<SlicedGrid>,
+               valueCache: inout Cache<SudokuBoard<Value>>) -> AsyncStream<Move<Value>> {
         AsyncStream { continuation in
             for position in board.positionsOfRowSlices.flatMap(\.items) where board[position] == nil {
-                guard let row = cache.positionsToRows[position]?.compactMap(board.value),
-                      let column = cache.positionsToColumns[position]?.compactMap(board.value),
-                      let region = cache.positionsToRegions[position]?.compactMap(board.value) else {
+                guard let row = layoutCache.row(for: position)?.compactMap(board.value),
+                      let column = layoutCache.column(for: position)?.compactMap(board.value),
+                      let region = layoutCache.region(for: position)?.compactMap(board.value) else {
                     continue
                 }
                 let symbols = Set(row.items + column.items + region.items)

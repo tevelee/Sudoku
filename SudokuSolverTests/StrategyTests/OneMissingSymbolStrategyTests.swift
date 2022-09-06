@@ -21,7 +21,9 @@ final class OneMissingSymbolStrategyTests: XCTestCase {
         let move = try XCTUnwrap(result)
         XCTAssertEqual(move.value, 3)
         XCTAssertEqual(move.position, Position(row: 0, column: 2))
-        XCTAssertEqual(move.reason, "3 is the only symbol missing from Row 1")
+        let reason = move.reasons.first
+        XCTAssertEqual(reason?.level1, "3 is the only symbol missing from Row 1")
+        XCTAssertEqual(reason?.level2, "Row 1 already contains 3 out of 4 values: 1, 2, and 4")
     }
 
     func test_whenOneIsMissingInColumn_thenFindsMove() async throws {
@@ -43,7 +45,9 @@ final class OneMissingSymbolStrategyTests: XCTestCase {
         let move = try XCTUnwrap(result)
         XCTAssertEqual(move.value, 2)
         XCTAssertEqual(move.position, Position(row: 1, column: 2))
-        XCTAssertEqual(move.reason, "2 is the only symbol missing from Column 3")
+        let reason = move.reasons.first
+        XCTAssertEqual(reason?.level1, "2 is the only symbol missing from Column 3")
+        XCTAssertEqual(reason?.level2, "Column 3 already contains 3 out of 4 values: 1, 3, and 4")
     }
 
     func test_whenOneIsMissingInRegion_thenFindsMove() async throws {
@@ -65,6 +69,8 @@ final class OneMissingSymbolStrategyTests: XCTestCase {
         let move = try XCTUnwrap(result)
         XCTAssertEqual(move.value, 4)
         XCTAssertEqual(move.position, Position(row: 1, column: 3))
-        XCTAssertEqual(move.reason, "4 is the only symbol missing from Region 2")
+        let reason = move.reasons.first
+        XCTAssertEqual(reason?.level1, "4 is the only symbol missing from Region 2")
+        XCTAssertEqual(reason?.level2, "Region 2 already contains 3 out of 4 values: 1, 2, and 3")
     }
 }
