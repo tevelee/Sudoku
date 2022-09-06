@@ -24,6 +24,5 @@ final class EliminatePairsStrategyTests: XCTestCase {
         let reason = move.reasons.first
         XCTAssertEqual(reason?.level1, "Symbols 1 and 2 are pairs in Row 1 Column 1 and Row 1 Column 2; 4 is the only symbol missing from Column 1")
         // EliminatePairs + OneMissing
-        // TODO: Board<PossibleValue<Int>>, enum PossibleValue<T> { case known(T), possible([T]) }
     }
 }

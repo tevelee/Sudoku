@@ -1,15 +1,14 @@
 import Foundation
 import Algorithms
 
-// - Valid board generator
-// - Jigsaw region generator
-// - Board scanner (reader) from string/image input
-// - UI
+// TODO: Valid board generator
+// TODO: Jigsaw region generator
+// TODO: Board scanner (reader) from string/image input
+// TODO: UI
 
 public typealias BoardSlice<Value> = Slice<Field<Value>>
 
 public struct SudokuBoard<Value> {
-    // TODO: store non optionals, because AvailableValue.possible can replace nil
     private var rawData: [[Value?]]
 
     let slicedGrid: SlicedGrid

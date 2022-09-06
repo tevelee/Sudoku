@@ -11,25 +11,29 @@ final class OneMissingSymbolStrategy<Value: Hashable & CustomStringConvertible>:
     func moves(on board: SudokuBoard<Value>,
                layoutCache: inout Cache<SlicedGrid>,
                valueCache: inout Cache<SudokuBoard<Value>>) -> AsyncStream<Move<Value>> {
-        let rows = moves(for: valueCache.rows())
-        let columns = moves(for: valueCache.columns())
-        let regions = moves(for: valueCache.regions())
+        let rows = moves(for: layoutCache.rows(), keyPath: \.row, covers: valueCache.covers())
+        let columns = moves(for: layoutCache.columns(), keyPath: \.column, covers: valueCache.covers())
+        let regions = moves(for: layoutCache.regions(), keyPath: \.region, covers: valueCache.covers())
         return chain(rows, columns, regions).stream()
     }
 
-    private func moves(for slices: some Sequence<BoardSlice<Value?>>) -> AsyncStream<Move<Value>> {
+    private func moves(for slices: [GridSlice],
+                       keyPath: KeyPath<Covers<Value>, Set<Value>>,
+                       covers: [Position: CoveredValue<Value>]) -> AsyncStream<Move<Value>> {
         AsyncStream { continuation in
             for slice in slices {
-                let items = Set(slice.items.compactMap(\.value))
-                if items.count == symbols.count - 1,
-                   let emptyPosition = slice.items.first(where: { $0.value == nil })?.position,
-                   let missingValue = symbols.subtracting(items).first {
-                    let values = slice.items.compactMap(\.value?.description).sorted().list()
-                    let move = Move(reason: "\(missingValue) is the only symbol missing from \(slice.name)",
-                                    details: "\(slice.name) already contains \(items.count) out of \(symbols.count) values: \(values)",
-                                    value: missingValue,
-                                    position: emptyPosition)
-                    continuation.yield(move)
+                for position in slice.items {
+                    if case .incomplete(let cover) = covers[position],
+                       cover[keyPath: keyPath].count == symbols.count - 1,
+                       let missingValue = symbols.subtracting(cover[keyPath: keyPath]).first {
+                        let items = cover[keyPath: keyPath]
+                        let values = items.map(\.description).sorted().list()
+                        let move = Move(reason: "\(missingValue) is the only symbol missing from \(slice.name)",
+                                        details: "\(slice.name) already contains \(items.count) out of \(symbols.count) values: \(values)",
+                                        value: missingValue,
+                                        position: position)
+                        continuation.yield(move)
+                    }
                 }
             }
             continuation.finish()

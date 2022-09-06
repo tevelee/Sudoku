@@ -53,8 +53,23 @@ extension Field: Hashable where T: Hashable {}
 
 enum CoveredValue<Value: Hashable> {
     case done(Value)
-    case incomplete(covered: Set<Value>)
+    case incomplete(Covers<Value>)
 }
+
+extension CoveredValue: Equatable where Value: Equatable {}
+extension CoveredValue: Hashable where Value: Hashable {}
+
+
+struct Covers<Value: Hashable> {
+    let row: Set<Value>
+    let column: Set<Value>
+    let region: Set<Value>
+
+    var all: Set<Value> { row.union(column).union(region) }
+}
+
+extension Covers: Equatable where Value: Equatable {}
+extension Covers: Hashable where Value: Hashable {}
 
 public struct Move<Value> {
     let value: Value
