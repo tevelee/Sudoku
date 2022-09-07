@@ -183,15 +183,14 @@ public final class SudokuBoardPrinter {
 
     func print<T: Hashable & CustomStringConvertible>(_ board: SudokuBoard<T>) -> String {
         var result: String = ""
-        var layoutCache = Cache(board.slicedGrid)
-        var valueCache = Cache(board)
-        if layoutCache.rows().isEmpty {
-            for row in valueCache.rows() {
+        let cache = Cache(board)
+        if cache.rows().isEmpty { // FIXME: reconsider this condition
+            for row in cache.rowsWithValues() {
                 Swift.print(row.items.map { render(.content($0.value)) }.joined(separator: render(.spacing)), to: &result)
             }
         } else {
             var regions: [Position: String] = [:]
-            for slice in layoutCache.regions() {
+            for slice in cache.regions() {
                 for item in slice.items {
                     regions[item] = slice.name
                 }

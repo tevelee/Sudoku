@@ -21,40 +21,37 @@ public final class SudokuSolver<Value: Hashable & CustomStringConvertible> {
     }
 
     public func availableMoves(_ board: SudokuBoard<Value>) -> AsyncStream<Move<Value>> {
-        var layoutCache = Cache(board.slicedGrid)
-        var valueCache = Cache(board)
-        return strategies.map { $0.moves(on: board, layoutCache: &layoutCache, valueCache: &valueCache) }.merged()
+        strategies.map { $0.moves(on: board, cache: Cache(board)) }.merged()
     }
 
     public func iterativeSolve(_ board: SudokuBoard<Value>) async -> IterativeSolutionResult<Solution<Value>> {
-        var layoutCache = Cache(board.slicedGrid)
-        return await solve(board, moves: [], layoutCache: &layoutCache).map { $0[0] }
+        await solve(board, moves: [], cache: Cache(board)).map { $0[0] }
     }
 
     private func solve(_ board: SudokuBoard<Value>,
                        moves: [Move<Value>],
-                       layoutCache: inout Cache<SlicedGrid>) async -> IterativeSolutionResult<[Solution<Value>]> {
-        var cache = Cache(board)
-        return await solve(board, moves: moves, layoutCache: &layoutCache, valueCache: &cache)
+                       cache: Cache<SudokuBoard<Value>>) async -> IterativeSolutionResult<[Solution<Value>]> {
+        let newCache = Cache(board)
+        newCache.slicedGrid = cache.slicedGrid // reuse existing computations for grid
+        return await _solve(board, moves: moves, cache: newCache)
     }
 
-    private func solve(_ board: SudokuBoard<Value>,
-                       moves: [Move<Value>],
-                       layoutCache: inout Cache<SlicedGrid>,
-                       valueCache: inout Cache<SudokuBoard<Value>>) async -> IterativeSolutionResult<[Solution<Value>]> {
-        guard valueCache.rows().isValid(against: rules),
-              valueCache.columns().isValid(against: rules),
-              valueCache.regions().isValid(against: rules) else {
+    private func _solve(_ board: SudokuBoard<Value>,
+                        moves: [Move<Value>],
+                        cache: Cache<SudokuBoard<Value>>) async -> IterativeSolutionResult<[Solution<Value>]> {
+        guard cache.rowsWithValues().isValid(against: rules),
+              cache.columnsWithValues().isValid(against: rules),
+              cache.regionsWithValues().isValid(against: rules) else {
             return .unsolvable
         }
         if board.isCompleted {
             return .solvable([Solution(moves: moves)])
         }
         for strategy in strategies {
-            if let move = await strategy.nextMove(on: board, layoutCache: &layoutCache, valueCache: &valueCache) {
+            if let move = await strategy.nextMove(on: board, cache: cache) {
                 var newBoard = board
                 newBoard[move.position] = move.value
-                if case .solvable(let solutions) = await solve(newBoard, moves: moves + [move], layoutCache: &layoutCache) {
+                if case .solvable(let solutions) = await solve(newBoard, moves: moves + [move], cache: cache) {
                     return .solvable(solutions)
                 }
             }
@@ -85,9 +82,9 @@ extension SudokuSolver where Value: Equatable {
 
     private func quickSolve(_ board: SudokuBoard<Value>, contentRule: ContentRule<Value>) -> QuickSolutionResult<Value> {
         var cache = Cache(board)
-        guard cache.rows().isValid(against: rules),
-              cache.columns().isValid(against: rules),
-              cache.regions().isValid(against: rules) else {
+        guard cache.rowsWithValues().isValid(against: rules),
+              cache.columnsWithValues().isValid(against: rules),
+              cache.regionsWithValues().isValid(against: rules) else {
             return .unsolvable
         }
 

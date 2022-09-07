@@ -8,12 +8,10 @@ final class OneMissingSymbolStrategy<Value: Hashable & CustomStringConvertible>:
         self.rules = rules
     }
 
-    func moves(on board: SudokuBoard<Value>,
-               layoutCache: inout Cache<SlicedGrid>,
-               valueCache: inout Cache<SudokuBoard<Value>>) -> AsyncStream<Move<Value>> {
-        let rows = moves(for: layoutCache.rows(), keyPath: \.row, covers: valueCache.covers())
-        let columns = moves(for: layoutCache.columns(), keyPath: \.column, covers: valueCache.covers())
-        let regions = moves(for: layoutCache.regions(), keyPath: \.region, covers: valueCache.covers())
+    func moves(on board: SudokuBoard<Value>, cache: Cache<SudokuBoard<Value>>) -> AsyncStream<Move<Value>> {
+        let rows = moves(for: cache.rows(), keyPath: \.row, covers: cache.covers())
+        let columns = moves(for: cache.columns(), keyPath: \.column, covers: cache.covers())
+        let regions = moves(for: cache.regions(), keyPath: \.region, covers: cache.covers())
         return chain(rows, columns, regions).stream()
     }
 

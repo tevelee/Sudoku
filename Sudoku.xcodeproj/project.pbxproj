@@ -23,6 +23,16 @@
 		8F382A4028BE8E0C00048406 /* LastPossibleSymbol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F382A3F28BE8E0C00048406 /* LastPossibleSymbol.swift */; };
 		8F382A4328BE915600048406 /* LastPossibleSymbolStrategyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F382A4228BE915500048406 /* LastPossibleSymbolStrategyTests.swift */; };
 		8F482F6C28BF99B00016F50D /* AsyncAlgorithms in Frameworks */ = {isa = PBXBuildFile; productRef = 8F482F6B28BF99B00016F50D /* AsyncAlgorithms */; };
+		8F63A23228CB6F4C003D0D11 /* Rows.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F63A23128CB6F4C003D0D11 /* Rows.swift */; };
+		8F63A23428CB7033003D0D11 /* Columns.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F63A23328CB7033003D0D11 /* Columns.swift */; };
+		8F63A23628CB7077003D0D11 /* Regions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F63A23528CB7077003D0D11 /* Regions.swift */; };
+		8F63A23828CB70E0003D0D11 /* RowForPosition.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F63A23728CB70E0003D0D11 /* RowForPosition.swift */; };
+		8F63A23A28CB72F8003D0D11 /* ColumnForPosition.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F63A23928CB72F8003D0D11 /* ColumnForPosition.swift */; };
+		8F63A23C28CB7367003D0D11 /* RegionForPosition.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F63A23B28CB7367003D0D11 /* RegionForPosition.swift */; };
+		8F63A23E28CB73E7003D0D11 /* RowValues.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F63A23D28CB73E7003D0D11 /* RowValues.swift */; };
+		8F63A24028CB740D003D0D11 /* ColumnValues.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F63A23F28CB740D003D0D11 /* ColumnValues.swift */; };
+		8F63A24228CB7420003D0D11 /* RegionValues.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F63A24128CB7420003D0D11 /* RegionValues.swift */; };
+		8F63A24428CB7431003D0D11 /* Covers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F63A24328CB7431003D0D11 /* Covers.swift */; };
 		8FAED55A28B29C02005C0797 /* SudokuApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FAED55928B29C02005C0797 /* SudokuApp.swift */; };
 		8FAED55C28B29C02005C0797 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FAED55B28B29C02005C0797 /* ContentView.swift */; };
 		8FAED55E28B29C05005C0797 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8FAED55D28B29C05005C0797 /* Assets.xcassets */; };
@@ -112,6 +122,16 @@
 		8F382A3D28BE8DE300048406 /* OneMissingSymbol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OneMissingSymbol.swift; sourceTree = "<group>"; };
 		8F382A3F28BE8E0C00048406 /* LastPossibleSymbol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LastPossibleSymbol.swift; sourceTree = "<group>"; };
 		8F382A4228BE915500048406 /* LastPossibleSymbolStrategyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LastPossibleSymbolStrategyTests.swift; sourceTree = "<group>"; };
+		8F63A23128CB6F4C003D0D11 /* Rows.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Rows.swift; sourceTree = "<group>"; };
+		8F63A23328CB7033003D0D11 /* Columns.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Columns.swift; sourceTree = "<group>"; };
+		8F63A23528CB7077003D0D11 /* Regions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Regions.swift; sourceTree = "<group>"; };
+		8F63A23728CB70E0003D0D11 /* RowForPosition.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RowForPosition.swift; sourceTree = "<group>"; };
+		8F63A23928CB72F8003D0D11 /* ColumnForPosition.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColumnForPosition.swift; sourceTree = "<group>"; };
+		8F63A23B28CB7367003D0D11 /* RegionForPosition.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegionForPosition.swift; sourceTree = "<group>"; };
+		8F63A23D28CB73E7003D0D11 /* RowValues.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RowValues.swift; sourceTree = "<group>"; };
+		8F63A23F28CB740D003D0D11 /* ColumnValues.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColumnValues.swift; sourceTree = "<group>"; };
+		8F63A24128CB7420003D0D11 /* RegionValues.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegionValues.swift; sourceTree = "<group>"; };
+		8F63A24328CB7431003D0D11 /* Covers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Covers.swift; sourceTree = "<group>"; };
 		8FAED55628B29C02005C0797 /* Sudoku.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Sudoku.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		8FAED55928B29C02005C0797 /* SudokuApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SudokuApp.swift; sourceTree = "<group>"; };
 		8FAED55B28B29C02005C0797 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -209,6 +229,24 @@
 			path = StrategyTests;
 			sourceTree = "<group>";
 		};
+		8F63A23028CB6F39003D0D11 /* Cache */ = {
+			isa = PBXGroup;
+			children = (
+				8FD0B4EC28C7D2C20091C078 /* Cache.swift */,
+				8F63A24328CB7431003D0D11 /* Covers.swift */,
+				8F63A23128CB6F4C003D0D11 /* Rows.swift */,
+				8F63A23328CB7033003D0D11 /* Columns.swift */,
+				8F63A23528CB7077003D0D11 /* Regions.swift */,
+				8F63A23728CB70E0003D0D11 /* RowForPosition.swift */,
+				8F63A23928CB72F8003D0D11 /* ColumnForPosition.swift */,
+				8F63A23B28CB7367003D0D11 /* RegionForPosition.swift */,
+				8F63A23D28CB73E7003D0D11 /* RowValues.swift */,
+				8F63A23F28CB740D003D0D11 /* ColumnValues.swift */,
+				8F63A24128CB7420003D0D11 /* RegionValues.swift */,
+			);
+			path = Cache;
+			sourceTree = "<group>";
+		};
 		8FAED54D28B29C02005C0797 = {
 			isa = PBXGroup;
 			children = (
@@ -280,7 +318,7 @@
 				8F33AF2228B4383000DAE01E /* Model.swift */,
 				8F1A1EF928B2C3970038B383 /* SudokuSolver.swift */,
 				8F382A3A28BE8DA600048406 /* Strategies.swift */,
-				8FD0B4EC28C7D2C20091C078 /* Cache.swift */,
+				8F63A23028CB6F39003D0D11 /* Cache */,
 				8F382A3C28BE8DD800048406 /* Strategies */,
 				8F1A1EF528B2BE380038B383 /* SudokuBoardPrinter.swift */,
 				8F33AF2628B55D7100DAE01E /* Intersperse.swift */,
@@ -541,19 +579,29 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8F63A24428CB7431003D0D11 /* Covers.swift in Sources */,
+				8F63A23A28CB72F8003D0D11 /* ColumnForPosition.swift in Sources */,
+				8F63A23228CB6F4C003D0D11 /* Rows.swift in Sources */,
 				8F382A3B28BE8DA700048406 /* Strategies.swift in Sources */,
 				8FD0B4ED28C7D2C20091C078 /* Cache.swift in Sources */,
 				8F33AF2328B4383000DAE01E /* Model.swift in Sources */,
+				8F63A24028CB740D003D0D11 /* ColumnValues.swift in Sources */,
 				8F382A3628BDF89B00048406 /* Slicing.swift in Sources */,
 				8FE82DBE28C2417500A5230D /* Utils.swift in Sources */,
 				8F1A1EFA28B2C3970038B383 /* SudokuSolver.swift in Sources */,
+				8F63A24228CB7420003D0D11 /* RegionValues.swift in Sources */,
+				8F63A23E28CB73E7003D0D11 /* RowValues.swift in Sources */,
 				8FFFAB2F28BE96AE00D575EA /* LastRemainingCell.swift in Sources */,
 				8FAED5A928B29E86005C0797 /* SudokuBoard.swift in Sources */,
 				8FAED58F28B29E7A005C0797 /* SudokuSolver.docc in Sources */,
 				8F33AF2728B55D7100DAE01E /* Intersperse.swift in Sources */,
 				8FE82DBA28C23B5500A5230D /* EliminatePairsStrategy.swift in Sources */,
+				8F63A23428CB7033003D0D11 /* Columns.swift in Sources */,
+				8F63A23C28CB7367003D0D11 /* RegionForPosition.swift in Sources */,
+				8F63A23628CB7077003D0D11 /* Regions.swift in Sources */,
 				8F382A4028BE8E0C00048406 /* LastPossibleSymbol.swift in Sources */,
 				8F1A1EF628B2BE380038B383 /* SudokuBoardPrinter.swift in Sources */,
+				8F63A23828CB70E0003D0D11 /* RowForPosition.swift in Sources */,
 				8F33AF2528B4384000DAE01E /* Rules.swift in Sources */,
 				8F382A3E28BE8DE300048406 /* OneMissingSymbol.swift in Sources */,
 			);

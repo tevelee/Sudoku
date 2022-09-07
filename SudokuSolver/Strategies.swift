@@ -3,30 +3,22 @@ import Foundation
 public protocol SudokuSolvingStrategy<Value> {
     associatedtype Value: CustomStringConvertible
 
-    func moves(on board: SudokuBoard<Value>,
-               layoutCache: inout Cache<SlicedGrid>,
-               valueCache: inout Cache<SudokuBoard<Value>>) -> AsyncStream<Move<Value>>
+    func moves(on board: SudokuBoard<Value>, cache: Cache<SudokuBoard<Value>>) -> AsyncStream<Move<Value>>
 }
 
 extension SudokuSolvingStrategy {
-    func nextMove(on board: SudokuBoard<Value>,
-                  layoutCache: inout Cache<SlicedGrid>,
-                  valueCache: inout Cache<SudokuBoard<Value>>) async -> Move<Value>? {
-        await moves(on: board, layoutCache: &layoutCache, valueCache: &valueCache).first
+    func nextMove(on board: SudokuBoard<Value>, cache: Cache<SudokuBoard<Value>>) async -> Move<Value>? {
+        await moves(on: board, cache: cache).first
     }
 }
 
 public extension SudokuSolvingStrategy {
     func moves(on board: SudokuBoard<Value>) -> AsyncStream<Move<Value>> {
-        var layoutCache = Cache(board.slicedGrid)
-        var valueCache = Cache(board)
-        return moves(on: board, layoutCache: &layoutCache, valueCache: &valueCache)
+        moves(on: board, cache: Cache(board))
     }
 
     func nextMove(on board: SudokuBoard<Value>) async -> Move<Value>? {
-        var layoutCache = Cache(board.slicedGrid)
-        var valueCache = Cache(board)
-        return await nextMove(on: board, layoutCache: &layoutCache, valueCache: &valueCache)
+        await nextMove(on: board, cache: Cache(board))
     }
 
     func distinctMoves(on board: SudokuBoard<Value>) async -> Set<Move<Value>> where Value: Hashable {
@@ -58,7 +50,6 @@ enum CoveredValue<Value: Hashable> {
 
 extension CoveredValue: Equatable where Value: Equatable {}
 extension CoveredValue: Hashable where Value: Hashable {}
-
 
 struct Covers<Value: Hashable> {
     let row: Set<Value>

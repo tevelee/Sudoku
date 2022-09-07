@@ -31,11 +31,11 @@ public struct UniqueSymbolsRule<Value: Hashable> {
     }
 
     public init(rowsAndColumnsAndRegions board: SudokuBoard<Value>) {
-        var cache = Cache(board)
+        let cache = Cache(board)
         self.init(slices: [
-            cache.rows().onlyCompletedValues(),
-            cache.columns().onlyCompletedValues(),
-            cache.regions().onlyCompletedValues()
+            cache.rowsWithValues().onlyCompletedValues(),
+            cache.columnsWithValues().onlyCompletedValues(),
+            cache.regionsWithValues().onlyCompletedValues()
       ].flatMap { $0 })
     }
 }

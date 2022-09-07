@@ -7,9 +7,7 @@ final class EliminatePairsStrategy<Value: Hashable & CustomStringConvertible>: S
         self.rules = rules
     }
 
-    func moves(on board: SudokuBoard<Value>,
-               layoutCache: inout Cache<SlicedGrid>,
-               valueCache: inout Cache<SudokuBoard<Value>>) -> AsyncStream<Move<Value>> {
+    func moves(on board: SudokuBoard<Value>, cache: Cache<SudokuBoard<Value>>) -> AsyncStream<Move<Value>> {
         AsyncStream { continuation in
             continuation.finish()
         }
