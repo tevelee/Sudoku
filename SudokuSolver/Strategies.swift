@@ -89,8 +89,8 @@ extension Move: Equatable where Value: Equatable {}
 extension Move: Hashable where Value: Hashable {}
 
 extension Array where Element: CustomStringConvertible {
-    func list() -> String {
-        ListFormatter().string(from: self) ?? map(\.description).joined(separator: ", ")
+    func list(formatter: ListFormatter = .english) -> String {
+        formatter.string(from: self) ?? map(\.description).joined(separator: ", ")
     }
 }
 
@@ -104,5 +104,11 @@ extension AsyncSequence {
             } catch {}
             return nil
         }
+    }
+}
+
+extension ListFormatter {
+    static let english = ListFormatter().apply {
+        $0.locale = Locale(identifier: "en-US")
     }
 }

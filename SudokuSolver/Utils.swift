@@ -20,3 +20,13 @@ extension Collection {
         return indices.contains(index) ? self[index] : nil
     }
 }
+
+protocol Apply {}
+extension Apply {
+    func apply(_ block: (inout Self) -> Void) -> Self {
+        var copy = self
+        block(&copy)
+        return copy
+    }
+}
+extension NSObject: Apply {}
