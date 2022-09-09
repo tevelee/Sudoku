@@ -9,33 +9,55 @@ final class OneMissingSymbolStrategy<Value: Hashable & CustomStringConvertible>:
     }
 
     func moves(on board: SudokuBoard<Value>, cache: Cache<SudokuBoard<Value>>) -> AsyncStream<Move<Value>> {
-        let rows = moves(for: cache.rows(), keyPath: \.row, covers: cache.covers())
-        let columns = moves(for: cache.columns(), keyPath: \.column, covers: cache.covers())
-        let regions = moves(for: cache.regions(), keyPath: \.region, covers: cache.covers())
+        let rows = moves(for: cache.rows(), on: board)
+        let columns = moves(for: cache.columns(), on: board)
+        let regions = moves(for: cache.regions(), on: board)
         return chain(rows, columns, regions).stream()
     }
 
-    private func moves(for slices: [GridSlice],
-                       keyPath: KeyPath<Covers<Value>, Set<Value>>,
-                       covers: [Position: CoveredValue<Value>]) -> AsyncStream<Move<Value>> {
+    private func moves(for slices: [GridSlice], on board: SudokuBoard<Value>) -> AsyncStream<Move<Value>> {
         AsyncStream { continuation in
             for slice in slices {
-                for position in slice.items {
-                    if case .incomplete(let cover) = covers[position],
-                       cover[keyPath: keyPath].count == symbols.count - 1,
-                       let missingValue = symbols.subtracting(cover[keyPath: keyPath]).first {
-                        let items = cover[keyPath: keyPath]
-                        let values = items.map(\.description).sorted().list()
-                        let move = Move(reason: "\(missingValue) is the only symbol missing from \(slice.name)",
-                                        details: "\(slice.name) already contains \(items.count) out of \(symbols.count) values: \(values)",
-                                        value: missingValue,
-                                        position: position)
-                        continuation.yield(move)
-                    }
+                if case let .oneIsMissing(values: items, emptyPosition) = analyze(slice: slice, on: board) {
+                    let missingValue = Array(symbols.subtracting(items))[0]
+                    let values = items.map(\.description).sorted().list()
+                    let move = Move(reason: "\(missingValue) is the only symbol missing from \(slice.name)",
+                                    details: "\(slice.name) already contains \(items.count) out of \(symbols.count) values: \(values)",
+                                    value: missingValue,
+                                    position: emptyPosition)
+                    continuation.yield(move)
                 }
             }
             continuation.finish()
         }
+    }
+
+    private func analyze(slice: GridSlice, on board: SudokuBoard<Value>) -> SliceAnalysis {
+        var count = 0
+        var values: Set<Value> = []
+        var emptyPosition: Position?
+        for position in slice.items {
+            if let value = board[position] {
+                values.insert(value)
+            } else {
+                count += 1
+                emptyPosition = position
+                if count > 1 {
+                    return .moreThanOneIsMissing
+                }
+            }
+        }
+        if let position = emptyPosition, count == 1 {
+            return .oneIsMissing(values: values, emptyPosition: position)
+        } else {
+            return .lessThanOneIsMissing
+        }
+    }
+
+    enum SliceAnalysis {
+        case oneIsMissing(values: Set<Value>, emptyPosition: Position)
+        case lessThanOneIsMissing
+        case moreThanOneIsMissing
     }
 
     private lazy var symbols = contentRule().map { Set($0.allowedSymbols) } ?? []
