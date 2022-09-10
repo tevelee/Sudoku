@@ -16,7 +16,7 @@ final class LastPossibleSymbolStrategy<Value: Hashable & CustomStringConvertible
                 if let move = check(position: position, board: board, cache: cache) {
                     continuation.yield(move)
                 } else {
-                    for reservation in reservedFields {
+                    for reservation in reservedFields.sorted(by: { $0.positions.formatted() < $1.positions.formatted() }) {
                         if let move = check(position: position,
                                             board: board,
                                             cache: cache,

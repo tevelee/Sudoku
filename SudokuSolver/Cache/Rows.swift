@@ -7,8 +7,12 @@ extension Cache {
         self.slicedGrid.grid.rows()
     }
 
-    func positions<T>() -> [Position] where Subject == SudokuBoard<T> {
+    func positions() -> [Position] where Subject == Grid {
         rows().flatMap(\.items)
+    }
+
+    func positions<T>() -> [Position] where Subject == SudokuBoard<T> {
+        self.slicedGrid.grid.positions()
     }
 
     func emptyPositions<T>() -> [Position] where Subject == SudokuBoard<T> {

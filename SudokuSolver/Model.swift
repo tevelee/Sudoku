@@ -8,12 +8,20 @@ public struct Size: Hashable {
     public let height: Int
 }
 
-public struct Position: Hashable, CustomStringConvertible {
+public struct Position: Hashable, Comparable, CustomStringConvertible {
     public let row: Int
     public let column: Int
 
     public var description: String {
         "(\(row),\(column))"
+    }
+
+    public static func < (lhs: Position, rhs: Position) -> Bool {
+        if lhs.row == rhs.row {
+            return lhs.column < rhs.column
+        } else {
+            return lhs.row < rhs.row
+        }
     }
 }
 

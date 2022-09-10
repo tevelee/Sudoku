@@ -51,15 +51,22 @@ public struct SudokuBoard<Value> {
         try self.init(rows, slicing: slicing)
     }
 
-    func firstIncompletePosition() -> Position? {
-        for (rowIndex, row) in rawData.enumerated() {
-            for (columnIndex, value) in row.enumerated() {
-                if value == nil {
-                    return Position(row: rowIndex, column: columnIndex)
-                }
-            }
-        }
-        return nil
+    var positions: [Position] {
+        Cache(slicedGrid.grid).positions()
+    }
+
+    var incompletePositions: [Position] {
+        positions.filter { self[$0] == nil }
+    }
+
+    var completePositions: [Position] {
+        positions.filter { self[$0] != nil }
+    }
+
+    func opposite(_ position: Position) -> Position {
+        let size = slicedGrid.grid.size
+        return Position(row: size.height - position.row - 1,
+                        column: size.width - position.column - 1)
     }
 
     subscript(position: Position) -> Value? {

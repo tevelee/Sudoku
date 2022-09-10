@@ -71,7 +71,7 @@ public final class SudokuSolver<Value: Hashable & CustomStringConvertible> {
         }
     }
 
-    private lazy var allSymbols: [Value] = {
+    lazy var allSymbols: [Value] = {
         for rule in rules {
             if let contentRule = isContentRule(rule) {
                 return contentRule.allowedSymbols
@@ -88,6 +88,13 @@ public final class SudokuSolver<Value: Hashable & CustomStringConvertible> {
 extension SudokuBoard {
     var isCompleted: Bool {
         values.allSatisfy { $0 != nil }
+    }
+
+    func isValid(against rules: [any SudokuRule<Value>]) -> Bool where Value: Hashable {
+        let cache = Cache(self)
+        return cache.rowsWithValues().isValid(against: rules)
+            && cache.columnsWithValues().isValid(against: rules)
+            && cache.regionsWithValues().isValid(against: rules)
     }
 }
 
@@ -125,11 +132,7 @@ extension SudokuSolver where Value: Equatable {
     private func _solutions(_ board: SudokuBoard<Value>, block: (SudokuBoard<Value>) -> Void) async {
         await Task.yield()
 
-        let cache = Cache(board)
-        guard !Task.isCancelled,
-              cache.rowsWithValues().isValid(against: rules),
-              cache.columnsWithValues().isValid(against: rules),
-              cache.regionsWithValues().isValid(against: rules) else {
+        guard !Task.isCancelled, isValid(board) else {
             return
         }
 
@@ -138,13 +141,17 @@ extension SudokuSolver where Value: Equatable {
             return
         }
 
-        if let position = board.firstIncompletePosition() {
+        if let position = board.incompletePositions.first {
             for value in allSymbols {
                 var newBoard = board
                 newBoard[position] = value
                 await _solutions(newBoard, block: block)
             }
         }
+    }
+
+    func isValid(_ board: SudokuBoard<Value>) -> Bool {
+        board.isValid(against: rules)
     }
 }
 
