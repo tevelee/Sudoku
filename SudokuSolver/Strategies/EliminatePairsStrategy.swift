@@ -2,17 +2,17 @@ import Foundation
 
 final class EliminatePairsStrategy<Value: Hashable & CustomStringConvertible>: SudokuSolvingStrategy {
     private let rules: [any SudokuRule<Value>]
+    private let strategies: (Set<ReservedFields<Value>>) -> [any SudokuSolvingStrategy<Value>]
 
-    init(rules: [any SudokuRule<Value>]) {
+    init(rules: [any SudokuRule<Value>],
+         strategies: @escaping (Set<ReservedFields<Value>>) -> [any SudokuSolvingStrategy<Value>]) {
         self.rules = rules
+        self.strategies = strategies
     }
 
     func moves(on board: SudokuBoard<Value>, cache: Cache<SudokuBoard<Value>>) -> AsyncStream<Move<Value>> {
         let pairs = self.pairs(in: cache.rows() + cache.columns() + cache.regions(), cache: cache)
-        let strategies = [
-            OneMissingSymbolStrategy(rules: rules, reservedFields: pairs)
-        ]
-        return strategies.map { $0.moves(on: board, cache: cache) }.merged()
+        return strategies(pairs).map { $0.moves(on: board, cache: cache) }.merged()
     }
 
     private func pairs(in slices: [GridSlice], cache: Cache<SudokuBoard<Value>>) -> Set<ReservedFields<Value>> {

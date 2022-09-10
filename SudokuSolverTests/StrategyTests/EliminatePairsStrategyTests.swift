@@ -12,7 +12,12 @@ final class EliminatePairsStrategyTests: XCTestCase {
         ])
         let contentRule = ContentRule(allowedSymbols: 1...4)
         let uniquenessRule = UniqueSymbolsRule(rowsAndColumnsAndRegions: board)
-        let strategy = EliminatePairsStrategy(rules: [contentRule, uniquenessRule])
+        let rules: [any SudokuRule<Int>] = [contentRule, uniquenessRule]
+        let strategy = EliminatePairsStrategy(rules: rules) { reservedFields in
+            [
+                OneMissingSymbolStrategy(rules: rules, reservedFields: reservedFields)
+            ]
+        }
 
         // When
         let result = await strategy.nextMove(on: board)

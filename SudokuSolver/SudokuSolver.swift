@@ -16,7 +16,12 @@ public final class SudokuSolver<Value: Hashable & CustomStringConvertible> {
         self.strategies = [
             OneMissingSymbolStrategy<Value>(rules: rules),
             LastRemainingCellStrategy<Value>(rules: rules),
-            LastPossibleSymbolStrategy<Value>(rules: rules)
+            LastPossibleSymbolStrategy<Value>(rules: rules),
+            EliminatePairsStrategy(rules: rules) {
+                [
+                    OneMissingSymbolStrategy<Value>(rules: rules, reservedFields: $0)
+                ]
+            }
         ] + strategies
     }
 
