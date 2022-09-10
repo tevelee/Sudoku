@@ -83,11 +83,11 @@ final class RegularBoardSolverTests: XCTestCase {
         let solutions = await solver.iterativeSolve(board)
 
         // Then
-        for await move in solver.availableMoves(board) {
-            print(move)
-        }
         if case .solvable(let solution) = solutions {
             print(solution)
+        }
+        for await move in solver.availableMoves(board) {
+            print(move)
         }
     }
 

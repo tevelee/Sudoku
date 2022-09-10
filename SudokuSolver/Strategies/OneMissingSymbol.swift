@@ -23,10 +23,9 @@ final class OneMissingSymbolStrategy<Value: Hashable & CustomStringConvertible>:
             for slice in slices {
                 if case let .oneIsMissing(values: items, emptyPosition, reservation) = analyze(slice: slice, on: board) {
                     let missingValue = Array(symbols.subtracting(items))[0]
-                    let values = items.map(\.description).sorted().list()
-                    let prefix = reservation.map { "Symbols \($0.values.formatted()) are \($0.name) in \($0.positions.map { formatted(position: $0, cache: cache) }.formatted()); " } ?? ""
+                    let prefix = reservation.reasonPrefix(cache: cache)
                     let move = Move(reason: "\(prefix)\(missingValue) is the only symbol missing from \(slice.name)",
-                                    details: "\(slice.name) already contains \(items.count) out of \(symbols.count) values: \(values)",
+                                    details: "\(slice.name) already contains \(items.count) out of \(symbols.count) values: \(items.formatted())",
                                     value: missingValue,
                                     position: emptyPosition)
                     continuation.yield(move)
@@ -90,17 +89,11 @@ final class OneMissingSymbolStrategy<Value: Hashable & CustomStringConvertible>:
     }
 }
 
-private extension GridSlice {
+extension GridSlice {
     func contains<Value>(reservedFields: ReservedFields<Value>) -> Bool {
         let positions = Set(items)
         return reservedFields.positions.allSatisfy { position in
             positions.contains(position)
         }
     }
-}
-
-private func formatted<Value>(position: Position, cache: Cache<SudokuBoard<Value>>) -> String {
-    let row = cache.row(for: position)?.name ?? ""
-    let column = cache.column(for: position)?.name ?? ""
-    return "\(row) \(column)"
 }

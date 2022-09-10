@@ -67,3 +67,9 @@ extension ListFormatter {
         $0.locale = Locale(identifier: "en-US")
     }
 }
+
+func formatted<Value>(position: Position, cache: Cache<SudokuBoard<Value>>) -> String {
+    let row = cache.row(for: position)?.name ?? ""
+    let column = cache.column(for: position)?.name ?? ""
+    return "\(row) \(column)"
+}

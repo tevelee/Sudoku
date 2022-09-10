@@ -59,4 +59,14 @@ struct ReservedFields<Value: Hashable>: Hashable {
         self.values = values
         self.positions = positions
     }
+
+    func reasonPrefix(cache: Cache<SudokuBoard<Value>>) -> String where Value: CustomStringConvertible {
+        "Symbols \(values.formatted()) are \(name) in \(positions.map { formatted(position: $0, cache: cache) }.formatted()); "
+    }
+}
+
+extension Optional {
+    func reasonPrefix<Value: CustomStringConvertible>(cache: Cache<SudokuBoard<Value>>) -> String where Wrapped == ReservedFields<Value> {
+        map { $0.reasonPrefix(cache: cache) } ?? ""
+    }
 }

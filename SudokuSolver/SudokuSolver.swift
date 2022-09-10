@@ -14,12 +14,13 @@ public final class SudokuSolver<Value: Hashable & CustomStringConvertible> {
                 additionalStrategies strategies: [any SudokuSolvingStrategy<Value>] = []) {
         self.rules = rules
         self.strategies = [
-            OneMissingSymbolStrategy<Value>(rules: rules),
-            LastRemainingCellStrategy<Value>(rules: rules),
-            LastPossibleSymbolStrategy<Value>(rules: rules),
-            EliminatePairsStrategy(rules: rules) {
+            OneMissingSymbolStrategy(rules: rules),
+            LastRemainingCellStrategy(rules: rules),
+            LastPossibleSymbolStrategy(rules: rules),
+            EliminatePairsStrategy(rules: rules) { reservedFields in
                 [
-                    OneMissingSymbolStrategy<Value>(rules: rules, reservedFields: $0)
+                    OneMissingSymbolStrategy(rules: rules, reservedFields: reservedFields),
+                    LastPossibleSymbolStrategy(rules: rules, reservedFields: reservedFields)
                 ]
             }
         ] + strategies
@@ -54,6 +55,7 @@ public final class SudokuSolver<Value: Hashable & CustomStringConvertible> {
         }
         for strategy in strategies {
             if let move = await strategy.nextMove(on: board, cache: cache) {
+                precondition(board[move.position] == nil)
                 var newBoard = board
                 newBoard[move.position] = move.value
                 if case .solvable(let solutions) = await solve(newBoard, moves: moves + [move], cache: cache) {
