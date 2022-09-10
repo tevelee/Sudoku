@@ -51,16 +51,13 @@ enum CoveredValue<Value: Hashable> {
 extension CoveredValue: Equatable where Value: Equatable {}
 extension CoveredValue: Hashable where Value: Hashable {}
 
-struct Covers<Value: Hashable> {
+struct Covers<Value: Hashable>: Hashable {
     let row: Set<Value>
     let column: Set<Value>
     let region: Set<Value>
 
     var all: Set<Value> { row.union(column).union(region) }
 }
-
-extension Covers: Equatable where Value: Equatable {}
-extension Covers: Hashable where Value: Hashable {}
 
 public struct Move<Value> {
     let value: Value
@@ -88,12 +85,6 @@ public struct Move<Value> {
 extension Move: Equatable where Value: Equatable {}
 extension Move: Hashable where Value: Hashable {}
 
-extension Array where Element: CustomStringConvertible {
-    func list(formatter: ListFormatter = .english) -> String {
-        formatter.string(from: self) ?? map(\.description).joined(separator: ", ")
-    }
-}
-
 extension AsyncSequence {
     var first: Element? {
         get async {
@@ -104,11 +95,5 @@ extension AsyncSequence {
             } catch {}
             return nil
         }
-    }
-}
-
-extension ListFormatter {
-    static let english = ListFormatter().apply {
-        $0.locale = Locale(identifier: "en-US")
     }
 }

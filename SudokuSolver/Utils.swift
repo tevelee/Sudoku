@@ -30,3 +30,40 @@ extension Apply {
     }
 }
 extension NSObject: Apply {}
+
+extension Array {
+    func merged<T>() -> AsyncStream<T> where Element: AsyncSequence, Element.Element == T {
+        .init { continuation in
+            Task {
+                for stream in self {
+                    do {
+                        for try await item in stream {
+                            continuation.yield(item)
+                        }
+                    } catch {
+                        continuation.finish()
+                    }
+                }
+                continuation.finish()
+            }
+        }
+    }
+}
+
+extension Collection where Element: CustomStringConvertible {
+    func formatted(formatter: ListFormatter = .english) -> String {
+        map(\.description).sorted().list(formatter: formatter)
+    }
+}
+
+extension Array where Element: CustomStringConvertible {
+    func list(formatter: ListFormatter = .english) -> String {
+        formatter.string(from: self) ?? map(\.description).joined(separator: ", ")
+    }
+}
+
+extension ListFormatter {
+    static let english = ListFormatter().apply {
+        $0.locale = Locale(identifier: "en-US")
+    }
+}

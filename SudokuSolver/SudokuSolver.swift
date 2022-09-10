@@ -164,18 +164,3 @@ public struct Solution<Value> {
 }
 
 extension Solution: Equatable where Value: Equatable {}
-
-private extension Array {
-    func merged<T>() -> AsyncStream<T> where Element == AsyncStream<T> {
-        .init { continuation in
-            Task {
-                for stream in self {
-                    for await item in stream {
-                        continuation.yield(item)
-                    }
-                }
-                continuation.finish()
-            }
-        }
-    }
-}

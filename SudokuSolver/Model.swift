@@ -23,7 +23,9 @@ public enum Segment: Equatable {
     case region(Index)
 }
 
-public struct Slice<T> {
+public struct Slice<T>: Identifiable {
+    public var id: String { name }
+
     public let name: String
     public let items: [T]
 

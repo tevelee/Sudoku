@@ -19,10 +19,9 @@ final class EliminatePairsStrategyTests: XCTestCase {
 
         // Then
         let move = try XCTUnwrap(result)
-        XCTAssertEqual(move.value, 1)
+        XCTAssertEqual(move.value, 4)
         XCTAssertEqual(move.position, Position(row: 3, column: 0))
         let reason = move.reasons.first
-        XCTAssertEqual(reason?.level1, "Symbols 1 and 2 are pairs in Row 1 Column 1 and Row 1 Column 2; 4 is the only symbol missing from Column 1")
-        // EliminatePairs + OneMissing
+        XCTAssertEqual(reason?.level1, "Symbols 1 and 2 are pairs in Row 1 Column 1 and Row 2 Column 1; 4 is the only symbol missing from Column 1")
     }
 }
