@@ -10,9 +10,10 @@ final class OneMissingSymbolStrategyTests: XCTestCase {
             [nil, nil, nil, nil],
             [nil, nil, nil, nil]
         ])
-        let contentRule = ContentRule(allowedSymbols: 1...4)
-        let uniquenessRule = UniqueSymbolsRule(rowsAndColumnsAndRegions: board)
-        let strategy = OneMissingSymbolStrategy(rules: [contentRule, uniquenessRule])
+        let strategy = OneMissingSymbolStrategy(rules: [
+            ContentRule(allowedSymbols: 1...4),
+            UniqueSymbolsRule()
+        ])
 
         // When
         let result = await strategy.nextMove(on: board)
@@ -34,9 +35,10 @@ final class OneMissingSymbolStrategyTests: XCTestCase {
             [nil, nil, 3, nil],
             [nil, nil, 4, nil]
         ])
-        let contentRule = ContentRule(allowedSymbols: 1...4)
-        let uniquenessRule = UniqueSymbolsRule(rowsAndColumnsAndRegions: board)
-        let strategy = OneMissingSymbolStrategy(rules: [contentRule, uniquenessRule])
+        let strategy = OneMissingSymbolStrategy(rules: [
+            ContentRule(allowedSymbols: 1...4),
+            UniqueSymbolsRule()
+        ])
 
         // When
         let result = await strategy.nextMove(on: board)
@@ -58,9 +60,10 @@ final class OneMissingSymbolStrategyTests: XCTestCase {
             [nil, nil, nil, nil],
             [nil, nil, nil, nil]
         ])
-        let contentRule = ContentRule(allowedSymbols: 1...4)
-        let uniquenessRule = UniqueSymbolsRule(rowsAndColumnsAndRegions: board)
-        let strategy = OneMissingSymbolStrategy(rules: [contentRule, uniquenessRule])
+        let strategy = OneMissingSymbolStrategy(rules: [
+            ContentRule(allowedSymbols: 1...4),
+            UniqueSymbolsRule()
+        ])
 
         // When
         let result = await strategy.nextMove(on: board)

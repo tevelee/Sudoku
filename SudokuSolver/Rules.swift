@@ -24,20 +24,7 @@ extension ContentRule: SudokuRule where Value: Equatable {
 }
 
 public struct UniqueSymbolsRule<Value: Hashable> {
-    public let slices: [Slice<Value>]
-
-    public init(slices: [Slice<Value>]) {
-        self.slices = slices
-    }
-
-    public init(rowsAndColumnsAndRegions board: SudokuBoard<Value>) {
-        let cache = Cache(board)
-        self.init(slices: [
-            cache.rowsWithValues().onlyCompletedValues(),
-            cache.columnsWithValues().onlyCompletedValues(),
-            cache.regionsWithValues().onlyCompletedValues()
-      ].flatMap { $0 })
-    }
+    public init() {}
 }
 
 private extension Array {

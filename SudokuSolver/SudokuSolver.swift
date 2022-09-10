@@ -70,6 +70,19 @@ public final class SudokuSolver<Value: Hashable & CustomStringConvertible> {
             return .partialSolution([Solution(moves: moves)])
         }
     }
+
+    private lazy var allSymbols: [Value] = {
+        for rule in rules {
+            if let contentRule = isContentRule(rule) {
+                return contentRule.allowedSymbols
+            }
+        }
+        return []
+    }()
+
+    private func isContentRule(_ value: some SudokuRule<Value>) -> ContentRule<Value>? {
+        value as? ContentRule<Value>
+    }
 }
 
 extension SudokuBoard {
@@ -80,48 +93,58 @@ extension SudokuBoard {
 
 @available(macOS 13.0.0, *)
 extension SudokuSolver where Value: Equatable {
-    public func quickSolve(_ board: SudokuBoard<Value>) -> QuickSolutionResult<Value> {
-        guard let contentRule = self.contentRule() else {
-            return .noContentRuleToPickElementsFrom
-        }
-        return quickSolve(board, contentRule: contentRule)
+    public func quickSolve(_ board: SudokuBoard<Value>) async -> QuickSolutionResult<Value> {
+        await solutions(board).first.map(QuickSolutionResult.solvable) ?? .unsolvable
     }
 
-    private func quickSolve(_ board: SudokuBoard<Value>, contentRule: ContentRule<Value>) -> QuickSolutionResult<Value> {
-        var cache = Cache(board)
-        guard cache.rowsWithValues().isValid(against: rules),
+    func hasOnlyOneSolution(_ board: SudokuBoard<Value>) async -> Bool {
+        var count = 0
+        for await _ in solutions(board) {
+            count += 1
+            if count > 1 {
+                return false
+            }
+        }
+        return count == 1
+    }
+
+    func solutions(_ board: SudokuBoard<Value>) -> AsyncStream<SudokuBoard<Value>> {
+        AsyncStream<SudokuBoard<Value>> { continuation in
+            let task = Task {
+                await _solutions(board) { solution in
+                    continuation.yield(solution)
+                }
+                continuation.finish()
+            }
+            continuation.onTermination = { _ in
+                task.cancel()
+            }
+        }
+    }
+
+    private func _solutions(_ board: SudokuBoard<Value>, block: (SudokuBoard<Value>) -> Void) async {
+        await Task.yield()
+
+        let cache = Cache(board)
+        guard !Task.isCancelled,
+              cache.rowsWithValues().isValid(against: rules),
               cache.columnsWithValues().isValid(against: rules),
               cache.regionsWithValues().isValid(against: rules) else {
-            return .unsolvable
+            return
         }
 
         if board.values.allSatisfy({ $0 != nil }) {
-            return .solvable(board)
+            block(board)
+            return
         }
 
         if let position = board.firstIncompletePosition() {
-            for value in contentRule.allowedSymbols {
-                var board = board
-                board[position] = value
-                if case .solvable(let board) = quickSolve(board, contentRule: contentRule) {
-                    return .solvable(board)
-                }
+            for value in allSymbols {
+                var newBoard = board
+                newBoard[position] = value
+                await _solutions(newBoard, block: block)
             }
         }
-        return .unsolvable
-    }
-
-    private func contentRule() -> ContentRule<Value>? {
-        for rule in rules {
-            if let contentRule = isContentRule(rule) {
-                return contentRule
-            }
-        }
-        return nil
-    }
-
-    private func isContentRule(_ value: some SudokuRule<Value>) -> ContentRule<Value>? {
-        value as? ContentRule<Value>
     }
 }
 
@@ -160,7 +183,6 @@ extension IterativeSolutionResult: Equatable where Solution: Equatable {}
 
 public enum QuickSolutionResult<Value> {
     case solvable(SudokuBoard<Value>)
-    case noContentRuleToPickElementsFrom
     case unsolvable
 }
 

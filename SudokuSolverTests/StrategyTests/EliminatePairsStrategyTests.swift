@@ -11,9 +11,10 @@ final class EliminatePairsStrategyTests: XCTestCase {
             [3,   nil, nil, nil],
             [nil, nil, nil, nil]
         ])
-        let contentRule = ContentRule(allowedSymbols: 1...4)
-        let uniquenessRule = UniqueSymbolsRule(rowsAndColumnsAndRegions: board)
-        let rules: [any SudokuRule<Int>] = [contentRule, uniquenessRule]
+        let rules: [any SudokuRule<Int>] = [
+            ContentRule(allowedSymbols: 1...4),
+            UniqueSymbolsRule()
+        ]
         let strategy = EliminatePairsStrategy(rules: rules) { reservedFields in
             [
                 OneMissingSymbolStrategy(rules: rules, reservedFields: reservedFields)
@@ -39,9 +40,10 @@ final class EliminatePairsStrategyTests: XCTestCase {
             [3,   nil, nil, nil],
             [nil, nil, nil, nil]
         ])
-        let contentRule = ContentRule(allowedSymbols: 1...4)
-        let uniquenessRule = UniqueSymbolsRule(rowsAndColumnsAndRegions: board)
-        let rules: [any SudokuRule<Int>] = [contentRule, uniquenessRule]
+        let rules: [any SudokuRule<Int>] = [
+            ContentRule(allowedSymbols: 1...4),
+            UniqueSymbolsRule()
+        ]
         let strategy = EliminatePairsStrategy(rules: rules) { reservedFields in
             [
                 LastPossibleSymbolStrategy(rules: rules, reservedFields: reservedFields)

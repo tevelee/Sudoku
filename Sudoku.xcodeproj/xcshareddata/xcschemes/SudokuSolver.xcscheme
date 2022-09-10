@@ -41,7 +41,7 @@
             </BuildableReference>
             <SkippedTests>
                <Test
-                  Identifier = "RegularBoardSolverTests/test_whenAttemptingToQuickSolveBoard_thenProvidesSolution()">
+                  Identifier = "RegularBoardGeneratorTests">
                </Test>
             </SkippedTests>
          </TestableReference>

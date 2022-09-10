@@ -20,9 +20,10 @@ final class RegularBoardSolverTests: XCTestCase {
             [6, 7, 8, 9, 1, 2, 3, 4, 5],
             [9, 1, 2, 3, 4, 5, 6, 7, 8]
         ])
-        let contentRule = ContentRule(allowedSymbols: 1...9)
-        let uniquenessRule = UniqueSymbolsRule(rowsAndColumnsAndRegions: board)
-        let solver = SudokuSolver(rules: [contentRule, uniquenessRule])
+        let solver = SudokuSolver(rules: [
+            ContentRule(allowedSymbols: 1...9),
+            UniqueSymbolsRule()
+        ])
 
         // When
         let solutions = await solver.iterativeSolve(board)
@@ -44,9 +45,10 @@ final class RegularBoardSolverTests: XCTestCase {
             [6, 7, 8, 9, 1, 2, 3, 4, 5],
             [9, 1, 2, 3, 4, 5, 6, 7, 8]
         ])
-        let contentRule = ContentRule(allowedSymbols: 1...9)
-        let uniquenessRule = UniqueSymbolsRule(rowsAndColumnsAndRegions: board)
-        let solver = SudokuSolver(rules: [contentRule, uniquenessRule])
+        let solver = SudokuSolver(rules: [
+            ContentRule(allowedSymbols: 1...9),
+            UniqueSymbolsRule()
+        ])
 
         // When
         let solutions = await solver.iterativeSolve(board)
@@ -75,9 +77,10 @@ final class RegularBoardSolverTests: XCTestCase {
             [  7, nil, nil,        nil,   6, nil,         8, nil, nil],
             [  2, nil, nil,          5,   3, nil,         4, nil, nil],
         ])
-        let contentRule = ContentRule(allowedSymbols: 1...9)
-        let uniquenessRule = UniqueSymbolsRule(rowsAndColumnsAndRegions: board)
-        let solver = SudokuSolver(rules: [contentRule, uniquenessRule])
+        let solver = SudokuSolver(rules: [
+            ContentRule(allowedSymbols: 1...9),
+            UniqueSymbolsRule()
+        ])
 
         // When
         let solutions = await solver.iterativeSolve(board)
@@ -91,15 +94,58 @@ final class RegularBoardSolverTests: XCTestCase {
         }
     }
 
-    func test_whenAttemptingToQuickSolveBoard_thenProvidesSolution() {
+    func test_whenAttemptingToSolveRealBoard_thenFindsSingleSolutions() async {
         // Given
-        let board = try! SudokuBoard<Int>(partiallyComplete: [])
-        let contentRule = ContentRule(allowedSymbols: 1...9)
-        let uniquenessRule = UniqueSymbolsRule(rowsAndColumnsAndRegions: board)
-        let solver = SudokuSolver(rules: [contentRule, uniquenessRule])
+        let board = try! SudokuBoard<Int>([
+            [  3,   4,   2,        nil,   8, nil,       nil, nil, nil],
+            [  5, nil, nil,          9, nil, nil,       nil, nil, nil],
+            [nil,   9, nil,        nil, nil,   4,         3,   8, nil],
+
+            [nil,   2, nil,          3, nil,   5,         1, nil, nil],
+            [nil,   5, nil,          7, nil,   6,       nil,   4, nil],
+            [nil,   7, nil,        nil,   9,   1,         6,   5,   2],
+
+            [  6, nil, nil,        nil,   7,   9,         2,   3,   1],
+            [  7, nil, nil,        nil,   6, nil,         8, nil, nil],
+            [  2, nil, nil,          5,   3, nil,         4, nil, nil],
+        ])
+        let solver = SudokuSolver(rules: [
+            ContentRule(allowedSymbols: 1...9),
+            UniqueSymbolsRule()
+        ])
 
         // When
-        let solution = solver.quickSolve(board)
+        let result = await solver.hasOnlyOneSolution(board)
+
+        // Then
+        XCTAssertTrue(result)
+    }
+
+    func test_whenAttemptingToSolveRealBoard_thenFindsMultipleSolutions() async {
+        // Given
+        let board = try! SudokuBoard<Int>()
+        let solver = SudokuSolver(rules: [
+            ContentRule(allowedSymbols: 1...9),
+            UniqueSymbolsRule()
+        ])
+
+        // When
+        let result = await solver.hasOnlyOneSolution(board)
+
+        // Then
+        XCTAssertFalse(result)
+    }
+
+    func test_whenAttemptingToQuickSolveBoard_thenProvidesSolution() async {
+        // Given
+        let board = try! SudokuBoard<Int>(partiallyComplete: [])
+        let solver = SudokuSolver(rules: [
+            ContentRule(allowedSymbols: 1...9),
+            UniqueSymbolsRule()
+        ])
+
+        // When
+        let solution = await solver.quickSolve(board)
 
         // Then
         XCTAssertEqual(solution, .solvable(try! SudokuBoard([

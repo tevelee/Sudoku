@@ -12,9 +12,10 @@ final class LastPossibleSymbolStrategyTests: XCTestCase {
             [nil, 4,   nil, nil, nil, nil],
             [nil, nil, nil, nil, nil, nil]
         ])
-        let contentRule = ContentRule(allowedSymbols: 1...6)
-        let uniquenessRule = UniqueSymbolsRule(rowsAndColumnsAndRegions: board)
-        let strategy = LastPossibleSymbolStrategy(rules: [contentRule, uniquenessRule])
+        let strategy = LastPossibleSymbolStrategy(rules: [
+            ContentRule(allowedSymbols: 1...6),
+            UniqueSymbolsRule()
+        ])
 
         // When
         let result = await strategy.nextMove(on: board)
