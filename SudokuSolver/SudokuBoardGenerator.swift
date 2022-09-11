@@ -1,5 +1,15 @@
 public final class SudokuBoardGenerator<Value: Hashable & CustomStringConvertible> {
-    public init() {}
+    private let deterministic: Bool
+    private let solver: SudokuSolver<Value>
+
+    public init(deterministic: Bool = false,
+                solver: SudokuSolver<Value> = SudokuSolver(rules: [
+                    ContentRule(allowedSymbols: 1...9),
+                    UniqueSymbolsRule()
+                ])) {
+        self.deterministic = deterministic
+        self.solver = solver
+    }
 
     public enum Difficulty: Comparable {
         case beginner
@@ -26,24 +36,24 @@ public final class SudokuBoardGenerator<Value: Hashable & CustomStringConvertibl
     }
 
     public func generateSolvablePuzzle(difficulty: Difficulty = .medium,
+                                       filterOnlySingleSolutions: Bool = true,
                                        symmetric: Bool = true,
-                                       deterministic: Bool = false,
-                                       solver: SudokuSolver<Value> = SudokuSolver(rules: [
-                                          ContentRule(allowedSymbols: 1...9),
-                                          UniqueSymbolsRule()
-                                       ]),
                                        fromPartial board: SudokuBoard<Value> = try! SudokuBoard<Int>()) async -> SudokuBoard<Value>? {
-        guard var board = await self.generateFullBoard(solver: solver, fromPartial: board, deterministic: deterministic) else {
+        guard var board = await generateFullBoard(fromPartial: board) else {
             return nil
         }
-        while board.completePositions.count > difficulty.numberOfGivenPositions(for: board.slicedGrid.grid.size) {
+        let numberOfPositions = difficulty.numberOfGivenPositions(for: board.slicedGrid.grid.size)
+        while board.completePositions.count > numberOfPositions {
             for position in deterministic ? board.completePositions : board.completePositions.shuffled() {
                 var newBoard = board
                 newBoard[position] = nil
                 if symmetric {
                     newBoard[newBoard.opposite(position)] = nil
                 }
-                if await solver.hasOnlyOneSolution(newBoard) {
+                if !filterOnlySingleSolutions {
+                    board = newBoard
+                    break
+                } else if await solver.hasOnlyOneSolution(newBoard) {
                     board = newBoard
                     break
                 }
@@ -52,29 +62,20 @@ public final class SudokuBoardGenerator<Value: Hashable & CustomStringConvertibl
         return board
     }
 
-    func generateFullBoard(solver: SudokuSolver<Value> = SudokuSolver(rules: [
-                               ContentRule(allowedSymbols: 1...9),
-                               UniqueSymbolsRule()
-                           ]),
-                           fromPartial board: SudokuBoard<Value> = try! SudokuBoard<Int>(),
-                           deterministic: Bool = false) async -> SudokuBoard<Value>? {
-        await Task.yield()
-
-        guard solver.isValid(board) else {
+    func generateFullBoard(fromPartial board: SudokuBoard<Value> = try! SudokuBoard<Int>()) async -> SudokuBoard<Value>? {
+        guard solver.isValid(board, cache: Cache(board.slicedGrid)) else {
             return nil
         }
-
-        if board.values.allSatisfy({ $0 != nil }) {
+        guard let position = board.incompletePositions.first else {
             return board
         }
 
-        if let position = board.incompletePositions.first {
-            for value in deterministic ? solver.allSymbols : solver.allSymbols.shuffled() {
-                var newBoard = board
-                newBoard[position] = value
-                if let board = await generateFullBoard(solver: solver, fromPartial: newBoard, deterministic: deterministic) {
-                    return board
-                }
+        for value in deterministic ? solver.allSymbols : solver.allSymbols.shuffled() {
+            await Task.yield()
+            var newBoard = board
+            newBoard[position] = value
+            if let board = await generateFullBoard(fromPartial: newBoard) {
+                return board
             }
         }
         return nil

@@ -1,7 +1,6 @@
 import Foundation
 import Algorithms
 
-// TODO: Valid board generator
 // TODO: Jigsaw region generator
 // TODO: Board scanner (reader) from string/image input
 // TODO: UI
@@ -55,12 +54,16 @@ public struct SudokuBoard<Value> {
         Cache(slicedGrid.grid).positions()
     }
 
-    var incompletePositions: [Position] {
-        positions.filter { self[$0] == nil }
+    var incompletePositions: some Collection<Position> {
+        positions.lazy.filter { self[$0] == nil }
     }
 
     var completePositions: [Position] {
         positions.filter { self[$0] != nil }
+    }
+
+    var isCompleted: Bool {
+        rawData.allSatisfy { $0.allSatisfy { $0 != nil } }
     }
 
     func opposite(_ position: Position) -> Position {

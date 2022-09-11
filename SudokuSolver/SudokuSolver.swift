@@ -45,9 +45,7 @@ public final class SudokuSolver<Value: Hashable & CustomStringConvertible> {
     private func _solve(_ board: SudokuBoard<Value>,
                         moves: [Move<Value>],
                         cache: Cache<SudokuBoard<Value>>) async -> IterativeSolutionResult<[Solution<Value>]> {
-        guard cache.rowsWithValues().isValid(against: rules),
-              cache.columnsWithValues().isValid(against: rules),
-              cache.regionsWithValues().isValid(against: rules) else {
+        guard isValid(board, cache: cache.slicedGrid) else {
             return .unsolvable
         }
         if board.isCompleted {
@@ -83,23 +81,7 @@ public final class SudokuSolver<Value: Hashable & CustomStringConvertible> {
     private func isContentRule(_ value: some SudokuRule<Value>) -> ContentRule<Value>? {
         value as? ContentRule<Value>
     }
-}
 
-extension SudokuBoard {
-    var isCompleted: Bool {
-        values.allSatisfy { $0 != nil }
-    }
-
-    func isValid(against rules: [any SudokuRule<Value>]) -> Bool where Value: Hashable {
-        let cache = Cache(self)
-        return cache.rowsWithValues().isValid(against: rules)
-            && cache.columnsWithValues().isValid(against: rules)
-            && cache.regionsWithValues().isValid(against: rules)
-    }
-}
-
-@available(macOS 13.0.0, *)
-extension SudokuSolver where Value: Equatable {
     public func quickSolve(_ board: SudokuBoard<Value>) async -> QuickSolutionResult<Value> {
         await solutions(board).first.map(QuickSolutionResult.solvable) ?? .unsolvable
     }
@@ -118,7 +100,7 @@ extension SudokuSolver where Value: Equatable {
     func solutions(_ board: SudokuBoard<Value>) -> AsyncStream<SudokuBoard<Value>> {
         AsyncStream<SudokuBoard<Value>> { continuation in
             let task = Task {
-                await _solutions(board) { solution in
+                await _solutions(board, cache: Cache(board.slicedGrid)) { solution in
                     continuation.yield(solution)
                 }
                 continuation.finish()
@@ -129,39 +111,31 @@ extension SudokuSolver where Value: Equatable {
         }
     }
 
-    private func _solutions(_ board: SudokuBoard<Value>, block: (SudokuBoard<Value>) -> Void) async {
-        await Task.yield()
-
-        guard !Task.isCancelled, isValid(board) else {
+    private func _solutions(_ board: SudokuBoard<Value>, cache: Cache<SlicedGrid>, block: (SudokuBoard<Value>) -> Void) async {
+        guard !Task.isCancelled, isValid(board, cache: cache) else {
             return
         }
 
-        if board.values.allSatisfy({ $0 != nil }) {
+        if board.isCompleted {
             block(board)
             return
         }
 
         if let position = board.incompletePositions.first {
             for value in allSymbols {
+                await Task.yield()
                 var newBoard = board
                 newBoard[position] = value
-                await _solutions(newBoard, block: block)
+                await _solutions(newBoard, cache: cache, block: block)
             }
         }
     }
 
-    func isValid(_ board: SudokuBoard<Value>) -> Bool {
-        board.isValid(against: rules)
-    }
-}
-
-private extension Array {
-    @available(macOS 13.0.0, *)
-    func isValid<Wrapped>(against rules: [any SudokuRule<Wrapped>]) -> Bool where Element == BoardSlice<Wrapped?> {
-        allSatisfy { slice in
-            rules.allSatisfy { rule in
-                rule.isValid(slice)
-            }
+    func isValid(_ board: SudokuBoard<Value>, cache: Cache<SlicedGrid>) -> Bool {
+        let slices = cache.grid.rows() + cache.grid.columns() + cache.regions()
+        let sliceItems = slices.map { $0.items.lazy.map(board.value) }
+        return rules.reversed().allSatisfy { rule in
+            sliceItems.allSatisfy(rule.isValid)
         }
     }
 }

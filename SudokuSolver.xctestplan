@@ -1,0 +1,30 @@
+{
+  "configurations" : [
+    {
+      "id" : "CC35F11B-1E25-4985-AD08-E4AECE82F22E",
+      "name" : "Configuration 1",
+      "options" : {
+        "mainThreadCheckerEnabled" : false,
+        "testExecutionOrdering" : "random",
+        "testTimeoutsEnabled" : true
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "codeCoverage" : false
+  },
+  "testTargets" : [
+    {
+      "parallelizable" : true,
+      "skippedTests" : [
+        "RegularBoardGeneratorTests"
+      ],
+      "target" : {
+        "containerPath" : "container:Sudoku.xcodeproj",
+        "identifier" : "8FAED59328B29E7B005C0797",
+        "name" : "SudokuSolverTests"
+      }
+    }
+  ],
+  "version" : 1
+}
